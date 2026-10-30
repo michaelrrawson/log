@@ -142,9 +142,11 @@ function drawMarkers(){
   if(!map) return;
   for(const m of Object.values(markers)) m.remove(); markers={};
   for(const e of entries){
-    const el=document.createElement("button"); el.type="button"; el.className="pin"+(e.id===selected?" on":""); el.setAttribute("aria-label",e.title);
-    el.innerHTML=`<span class="tip">${esc(e.title)}<span class="mono">${esc(fmtRange(e.start_date,e.end_date))}</span></span>`;
-    el.addEventListener("click",ev=>{ ev.stopPropagation(); select(e.id,{fly:true}); });
+    const el=document.createElement("div"); el.className="pinwrap";
+    const b=document.createElement("button"); b.type="button"; b.className="pin"+(e.id===selected?" on":""); b.setAttribute("aria-label",e.title);
+    b.innerHTML=`<span class="tip">${esc(e.title)}<span class="mono">${esc(fmtRange(e.start_date,e.end_date))}</span></span>`;
+    b.addEventListener("click",ev=>{ ev.stopPropagation(); select(e.id,{fly:true}); });
+    el.appendChild(b);
     markers[e.id]=new mapboxgl.Marker({element:el,anchor:"bottom"}).setLngLat([e.lng,e.lat]).addTo(map);
   }
 }
@@ -351,23 +353,39 @@ function drawOnMap(root,start,done){
   m.bar.querySelector("#dDone").onclick=()=>end(true); m.bar.querySelector("#dCancel").onclick=()=>end(false);
 }
 
-/* ---------- 3D route replay: a free camera that follows the track over real terrain ----------
-   Smoothness comes from three things: the camera follows a resampled, smoothed copy of the route
-   (so GPS jitter and sharp corners don't jerk it), its position, height and heading are eased
-   every frame, and the drawn trail is revealed with a paint property instead of rebuilding data. */
+/* ---------- 3D route replay, modeled on Strava's flyover ----------
+   The whole camera path is computed once before playback: the route is resampled, a heavily
+   smoothed copy gives the camera's focus point, and the heading comes from a long look-ahead
+   that is unwrapped and averaged again. Each frame then just interpolates those arrays and
+   calls jumpTo, letting Mapbox keep the camera a steady height above the terrain. */
 let replay=null;
 function startReplay(e){
   if(!map || e.route.length<2) return; if(replay) replay.stop();
   const route=e.route, cum=[0]; for(let i=1;i<route.length;i++) cum.push(cum[i-1]+hav(route[i-1],route[i]));
   const total=cum.at(-1)||1, miles=mi(total);
   const rawAt=d=>{ d=Math.max(0,Math.min(total,d)); let lo=0,hi=cum.length-1; while(hi-lo>1){ const m=(lo+hi)>>1; if(cum[m]<=d) lo=m; else hi=m; } const f=(d-cum[lo])/((cum[hi]-cum[lo])||1); return [route[lo][0]+(route[hi][0]-route[lo][0])*f, route[lo][1]+(route[hi][1]-route[lo][1])*f]; };
-  // resample evenly, then a moving average for the camera's path
-  const step=Math.max(4,total/3000), n=Math.ceil(total/step)+1, rs=[];
+
+  // 1. resample evenly
+  const step=Math.max(3,total/4000), n=Math.ceil(total/step)+1, rs=[];
   for(let k=0;k<n;k++) rs.push(rawAt(Math.min(total,k*step)));
-  const h=Math.max(1,Math.round(Math.max(40,Math.min(700,total*0.02))/step)), pl=[0], pg=[0];
-  rs.forEach(p=>{ pl.push(pl.at(-1)+p[0]); pg.push(pg.at(-1)+p[1]); });
-  const sm=rs.map((_,k)=>{ const a=Math.max(0,k-h), b=Math.min(n-1,k+h), c=b-a+1; return [(pl[b+1]-pl[a])/c,(pg[b+1]-pg[a])/c]; });
-  const smAt=d=>{ const x=Math.max(0,Math.min(n-1,d/step)), k=Math.floor(x), f=x-k, a=sm[k], b=sm[Math.min(n-1,k+1)]; return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f]; };
+  const avg=(arr,win)=>{ // centered moving average with prefix sums, edges clamped
+    const h=Math.max(1,Math.round(win/step)), dims=arr[0].length, pre=Array.from({length:dims},()=>[0]);
+    arr.forEach(p=>{ for(let k=0;k<dims;k++) pre[k].push(pre[k].at(-1)+p[k]); });
+    return arr.map((_,i)=>{ const a=Math.max(0,i-h), b=Math.min(arr.length-1,i+h), c=b-a+1; return Array.from({length:dims},(_,k)=>(pre[k][b+1]-pre[k][a])/c); });
+  };
+  // 2. focus path: smooth enough to hide GPS jitter, close enough to stay on the trail
+  const focus=avg(avg(rs,Math.max(60,Math.min(400,total*0.012))),Math.max(60,Math.min(400,total*0.012)));
+  // 3. heading: long look-ahead, unwrapped, then averaged twice
+  const look=Math.max(250,Math.min(1800,total*0.04));
+  const lk=Math.max(1,Math.round(look/step));
+  let prev=null; const head=focus.map((p,i)=>{ const a=focus[Math.max(0,i-Math.round(lk*0.3))], b=focus[Math.min(n-1,i+lk)]; let h=bearingOf(a,b);
+    if(prev!==null){ while(h-prev>180) h-=360; while(h-prev<-180) h+=360; } prev=h; return [h]; });
+  const brg=avg(avg(head,look*0.8),look*0.8).map(x=>x[0]);
+  const sample=(arr,d)=>{ const x=Math.max(0,Math.min(n-1,d/step)), k=Math.floor(x), f=x-k, a=arr[k], b=arr[Math.min(n-1,k+1)]; return Array.isArray(a)?[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]:a+(b-a)*f; };
+
+  // camera framing: closer for short routes, farther back for long ones
+  const zoom=Math.max(12.6,Math.min(15.2,15.6-Math.log2(Math.max(1,total/1500))*0.55)), pitch=reduce?0:54;
+  const baseDur=Math.min(75,Math.max(22,14+miles*1.6))*1000;
 
   const wrap=$("#chartwrap"); wrap.classList.add("replay"); wrap.scrollIntoView({block:"nearest"});
   Object.values(markers).forEach(mk=>mk.getElement().style.visibility="hidden");
@@ -375,8 +393,11 @@ function startReplay(e){
   map.getSource("trail").setData({type:"Feature",properties:{},geometry:{type:"LineString",coordinates:route.map(ll)}});
   const trim=p=>{ const v=[Math.min(.99999,Math.max(0,p)),1]; map.setPaintProperty("trail-line","line-trim-offset",v); map.setPaintProperty("trail-glow","line-trim-offset",v); };
   trim(0); map.setLayoutProperty("trail-line","visibility","visible"); map.setLayoutProperty("trail-glow","visibility","visible");
+  const prevEx=1.35; map.setTerrain({source:"dem",exaggeration:1.5});
   const headEl=document.createElement("div"); headEl.className="rphead";
-  const head=new mapboxgl.Marker({element:headEl,pitchAlignment:"map",rotationAlignment:"map"}).setLngLat(ll(route[0])).addTo(map);
+  const dot=new mapboxgl.Marker({element:headEl}).setLngLat(ll(route[0])).addTo(map);
+  const lock=["dragPan","scrollZoom","doubleClickZoom","boxZoom","keyboard","touchZoomRotate","dragRotate","touchPitch"];
+  lock.forEach(h=>map[h]&&map[h].disable());
 
   const title=document.createElement("div"); title.className="replaytitle label"; title.innerHTML=`${esc(KINDS[e.kind])}<b>${esc(e.title)}</b>`; wrap.appendChild(title);
   const bar=document.createElement("div"); bar.className="replaybar";
@@ -384,51 +405,38 @@ function startReplay(e){
   wrap.appendChild(bar);
   const seekEl=bar.querySelector("#rpSeek"), readEl=bar.querySelector("#rpRead"), playEl=bar.querySelector("#rpPlay");
 
-  const baseDur=Math.min(70,Math.max(20,12+miles*1.5))*1000;
-  const back=Math.max(700,Math.min(3500,total*0.05)), height=back*0.6, look=Math.max(250,Math.min(2500,total*0.05));
-  const elev=p=>map.queryTerrainElevation({lng:p[1],lat:p[0]},{exaggerated:true});
-  const st={d:0,playing:true,speed:1,brg:null,ze:null,cam:null,intro:0,last:performance.now(),raf:0,snap:false,start:null,uiT:0};
-  try{ st.start=map.getFreeCameraOptions().position; }catch{}
-  const ease=(cur,want,rate,dt)=>cur+(want-cur)*(1-Math.exp(-rate*dt));
-
+  const st={d:0,playing:false,speed:1,last:0,raf:0,uiT:0,v:0};
+  const cam=d=>{ const c=sample(focus,d); return {center:[c[1],c[0]],bearing:((sample(brg,d)%360)+360)%360,pitch,zoom}; };
   function frame(now){
     const dt=Math.min(.05,(now-st.last)/1000); st.last=now;
-    if(st.playing && st.intro>=1){ st.d+=total/(baseDur/1000)*st.speed*dt; if(st.d>=total){ st.d=total; st.playing=false; playEl.textContent="Replay"; } }
-    st.intro=Math.min(1,st.intro+dt/2.4);
-    const tgt=smAt(st.d);
-    const wantBrg=bearingOf(smAt(st.d-look*0.5), smAt(st.d+look));
-    if(st.brg===null || st.snap) st.brg=wantBrg; else { const diff=((wantBrg-st.brg+540)%360)-180; st.brg=(st.brg+diff*(1-Math.exp(-(reduce?20:1.4)*dt))+360)%360; }
-    const zNow=elev(tgt); if(zNow!=null) st.ze = (st.ze==null||st.snap) ? zNow : ease(st.ze,zNow,2,dt); const ze=st.ze||0;
-    const camLL=destination(tgt,(st.brg+180)%360,back), zc=elev(camLL);
-    const wantAlt=Math.max(ze, zc==null?ze:zc-100)+height;
-    const want=mapboxgl.MercatorCoordinate.fromLngLat({lng:camLL[1],lat:camLL[0]},wantAlt);
-    if(!st.cam || st.snap) st.cam={x:want.x,y:want.y,z:want.z};
-    else { st.cam.x=ease(st.cam.x,want.x,4,dt); st.cam.y=ease(st.cam.y,want.y,4,dt); st.cam.z=ease(st.cam.z,want.z,1.5,dt); }
-    st.snap=false;
-    let P=st.cam;
-    if(st.start && st.intro<1){ const k=1-Math.pow(1-st.intro,3), s=st.start; P={x:s.x+(P.x-s.x)*k,y:s.y+(P.y-s.y)*k,z:s.z+(P.z-s.z)*k}; }
-    const cam=map.getFreeCameraOptions();
-    cam.position=new mapboxgl.MercatorCoordinate(P.x,P.y,P.z);
-    // aim at the target on the ground, not at sea level under it
-    const T=mapboxgl.MercatorCoordinate.fromLngLat({lng:tgt[1],lat:tgt[0]},ze), kk=P.z/Math.max(1e-12,P.z-T.z);
-    cam.lookAtPoint(new mapboxgl.MercatorCoordinate(P.x+(T.x-P.x)*kk, P.y+(T.y-P.y)*kk, 0).toLngLat());
-    map.setFreeCameraOptions(cam);
-    head.setLngLat(ll(rawAt(st.d))); trim(st.d/total);
-    if(now-st.uiT>100){ st.uiT=now; seekEl.value=Math.round(st.d/total*1000); readEl.textContent=`${mi(st.d).toFixed(1)} / ${miles.toFixed(1)} mi`; }
+    const cruise=total/(baseDur/1000)*st.speed;
+    // ease speed in and out instead of starting and stopping abruptly
+    const target = st.playing ? cruise*Math.min(1,0.25+0.75*Math.min(st.d,total-st.d)/Math.max(1,total*0.04)) : 0;
+    st.v += (target-st.v)*(1-Math.exp(-3*dt));
+    st.d = Math.min(total, st.d + st.v*dt);
+    if(st.playing && st.d>=total){ st.playing=false; playEl.textContent="Replay"; }
+    map.jumpTo(cam(st.d));
+    dot.setLngLat(ll(rawAt(st.d))); trim(st.d/total);
+    if(now-st.uiT>120){ st.uiT=now; seekEl.value=Math.round(st.d/total*1000); readEl.textContent=`${mi(st.d).toFixed(1)} / ${miles.toFixed(1)} mi`; }
     st.raf=requestAnimationFrame(frame);
   }
-  playEl.onclick=()=>{ if(st.d>=total){ st.d=0; st.playing=true; st.snap=true; } else st.playing=!st.playing; playEl.textContent=st.playing?"Pause":"Play"; };
-  seekEl.oninput=()=>{ st.d=seekEl.value/1000*total; st.intro=1; st.snap=true; if(st.d<total && !st.playing) playEl.textContent="Play"; };
+  const begin=()=>{ if(!replay) return; st.playing=true; st.last=performance.now(); st.raf=requestAnimationFrame(frame); };
+  // glide into the opening shot, then start
+  map.once("moveend",begin);
+  map.flyTo({...cam(0),duration:reduce?0:2800,curve:1.4,essential:true});
+
+  playEl.onclick=()=>{ if(st.d>=total){ st.d=0; st.v=0; st.playing=true; } else st.playing=!st.playing; playEl.textContent=st.playing?"Pause":"Play"; };
+  seekEl.oninput=()=>{ st.d=seekEl.value/1000*total; st.v=0; if(st.d<total && !st.playing) playEl.textContent="Play"; };
   bar.querySelector("#rpSpeed").onclick=ev=>{ st.speed={1:2,2:4,4:.5,.5:1}[st.speed]; ev.target.textContent=(st.speed===.5?"½":st.speed)+"×"; };
   bar.querySelector("#rpExit").onclick=()=>replay.stop(true);
   const onKey=ev=>{ if(ev.key==="Escape") replay.stop(true); if(ev.key===" "&&ev.target===document.body){ ev.preventDefault(); playEl.click(); } };
   document.addEventListener("keydown",onKey);
-  replay={ stop(fly){ cancelAnimationFrame(st.raf); document.removeEventListener("keydown",onKey); bar.remove(); title.remove(); head.remove(); wrap.classList.remove("replay");
+  replay={ stop(fly){ cancelAnimationFrame(st.raf); map.off("moveend",begin); document.removeEventListener("keydown",onKey); bar.remove(); title.remove(); dot.remove(); wrap.classList.remove("replay");
+    lock.forEach(h=>map[h]&&map[h].enable()); map.setTerrain({source:"dem",exaggeration:prevEx});
     Object.values(markers).forEach(mk=>mk.getElement().style.visibility="");
     map.setLayoutProperty("trail-line","visibility","none"); map.setLayoutProperty("trail-glow","visibility","none");
     map.setPaintProperty("routes-line","line-opacity",["case",["get","on"],1,0.6]); map.setPaintProperty("routes-glow","line-opacity",0.25);
     replay=null; if(fly) flyTo(e); } };
-  st.raf=requestAnimationFrame(frame);
 }
 
 /* ---------- start ---------- */

@@ -59,7 +59,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .mapboxgl-ctrl-scale{font-family:var(--mono);border-radius:0}
 
 /* pins */
-.pin{width:12px;height:20px;cursor:pointer;position:relative}
+.pinwrap{width:12px;height:20px}
+.pin{display:block;width:12px;height:20px;cursor:pointer;position:relative;padding:0}
 .pin::before{content:"";position:absolute;left:5.5px;top:6px;width:1px;height:14px;background:var(--pin);box-shadow:0 0 0 .5px var(--pin-edge)}
 .pin::after{content:"";position:absolute;left:3px;top:0;width:6px;height:6px;border-radius:50%;background:var(--pin);box-shadow:0 0 0 1px var(--pin-edge),0 0 8px var(--pin)}
 .pin.on::after{width:9px;height:9px;left:1.5px;top:-1.5px;background:var(--pin-edge);box-shadow:inset 0 0 0 2px var(--pin),0 0 0 1px var(--pin-edge),0 0 10px var(--pin)}
