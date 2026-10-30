@@ -420,10 +420,12 @@ function startReplay(e){
     if(now-st.uiT>120){ st.uiT=now; seekEl.value=Math.round(st.d/total*1000); readEl.textContent=`${mi(st.d).toFixed(1)} / ${miles.toFixed(1)} mi`; }
     st.raf=requestAnimationFrame(frame);
   }
-  const begin=()=>{ if(!replay) return; st.playing=true; st.last=performance.now(); st.raf=requestAnimationFrame(frame); };
-  // glide into the opening shot, then start
-  map.once("moveend",begin);
-  map.flyTo({...cam(0),duration:reduce?0:2800,curve:1.4,essential:true});
+  let alive=true, started=false;
+  const begin=()=>{ if(!alive||started) return; started=true; st.playing=true; st.last=performance.now(); st.raf=requestAnimationFrame(frame); };
+  // glide into the opening shot, then start on a timer (camera "moveend" events can fire early here)
+  const introMs=reduce?0:2800;
+  map.flyTo({...cam(0),duration:introMs,curve:1.4,essential:true});
+  const startTimer=setTimeout(begin,introMs+80);
 
   playEl.onclick=()=>{ if(st.d>=total){ st.d=0; st.v=0; st.playing=true; } else st.playing=!st.playing; playEl.textContent=st.playing?"Pause":"Play"; };
   seekEl.oninput=()=>{ st.d=seekEl.value/1000*total; st.v=0; if(st.d<total && !st.playing) playEl.textContent="Play"; };
@@ -431,7 +433,7 @@ function startReplay(e){
   bar.querySelector("#rpExit").onclick=()=>replay.stop(true);
   const onKey=ev=>{ if(ev.key==="Escape") replay.stop(true); if(ev.key===" "&&ev.target===document.body){ ev.preventDefault(); playEl.click(); } };
   document.addEventListener("keydown",onKey);
-  replay={ stop(fly){ cancelAnimationFrame(st.raf); map.off("moveend",begin); document.removeEventListener("keydown",onKey); bar.remove(); title.remove(); dot.remove(); wrap.classList.remove("replay");
+  replay={ stop(fly){ alive=false; clearTimeout(startTimer); cancelAnimationFrame(st.raf); document.removeEventListener("keydown",onKey); bar.remove(); title.remove(); dot.remove(); wrap.classList.remove("replay");
     lock.forEach(h=>map[h]&&map[h].enable()); map.setTerrain({source:"dem",exaggeration:prevEx});
     Object.values(markers).forEach(mk=>mk.getElement().style.visibility="");
     map.setLayoutProperty("trail-line","visibility","none"); map.setLayoutProperty("trail-glow","visibility","none");
