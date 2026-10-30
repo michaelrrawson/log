@@ -401,12 +401,26 @@ function startReplay(e){
 
   const title=document.createElement("div"); title.className="replaytitle label"; title.innerHTML=`${esc(KINDS[e.kind])}<b>${esc(e.title)}</b>`; wrap.appendChild(title);
   const bar=document.createElement("div"); bar.className="replaybar";
-  bar.innerHTML=`<button type="button" class="label" id="rpPlay">Pause</button><input type="range" id="rpSeek" min="0" max="1000" value="0" aria-label="Position along route"><span class="mono" id="rpRead"></span><button type="button" class="label" id="rpSpeed">1×</button><button type="button" class="label" id="rpExit">Exit</button>`;
+  bar.innerHTML=`<button type="button" class="label" id="rpPlay">Pause</button><input type="range" id="rpSeek" min="0" max="1000" value="0" aria-label="Position along route"><span class="mono" id="rpRead"></span><button type="button" class="label" id="rpSpeed">1×</button><button type="button" class="label" id="rpView" aria-expanded="false">View</button><button type="button" class="label" id="rpExit">Exit</button>`;
   wrap.appendChild(bar);
+  // View panel: zoom and tilt, remembered between replays
+  let saved={z:0,p:pitch}; try{ saved={...saved,...JSON.parse(localStorage.getItem("replayView")||"{}")}; }catch{}
+  const panel=document.createElement("div"); panel.className="viewpanel"; panel.hidden=true;
+  panel.innerHTML=`<label class="label" for="vZoom">Zoom</label><span class="end">Far</span><input type="range" id="vZoom" min="-1.5" max="2" step="0.05" value="${saved.z}"><span class="end">Close</span>
+    <label class="label" for="vTilt">Tilt</label><span class="end">Flat</span><input type="range" id="vTilt" min="20" max="72" step="1" value="${saved.p}"><span class="end">Low</span>
+    <span></span><button type="button" class="link label" id="vReset">Reset</button><span class="hint">Keys: + − zoom, ↑ ↓ tilt</span>`;
+  wrap.appendChild(panel);
   const seekEl=bar.querySelector("#rpSeek"), readEl=bar.querySelector("#rpRead"), playEl=bar.querySelector("#rpPlay");
+  const zEl=panel.querySelector("#vZoom"), tEl=panel.querySelector("#vTilt");
 
-  const st={d:0,playing:false,speed:1,last:0,raf:0,uiT:0,v:0};
-  const cam=d=>{ const c=sample(focus,d); return {center:[c[1],c[0]],bearing:((sample(brg,d)%360)+360)%360,pitch,zoom}; };
+  const st={d:0,playing:false,speed:1,last:0,raf:0,uiT:0,v:0, zT:+saved.z, pT:+saved.p, z:+saved.z, p:+saved.p};
+  const keep=()=>{ try{ localStorage.setItem("replayView",JSON.stringify({z:st.zT,p:st.pT})); }catch{} };
+  const setZ=v=>{ st.zT=Math.max(-1.5,Math.min(2,v)); zEl.value=st.zT; keep(); };
+  const setP=v=>{ st.pT=Math.max(20,Math.min(72,v)); tEl.value=st.pT; keep(); };
+  zEl.oninput=()=>setZ(+zEl.value); tEl.oninput=()=>setP(+tEl.value);
+  panel.querySelector("#vReset").onclick=()=>{ setZ(0); setP(pitch); };
+  bar.querySelector("#rpView").onclick=ev=>{ panel.hidden=!panel.hidden; ev.target.setAttribute("aria-expanded",String(!panel.hidden)); };
+  const cam=d=>{ const c=sample(focus,d); return {center:[c[1],c[0]],bearing:((sample(brg,d)%360)+360)%360,pitch:reduce?0:st.p,zoom:zoom+st.z}; };
   function frame(now){
     const dt=Math.min(.05,(now-st.last)/1000); st.last=now;
     const cruise=total/(baseDur/1000)*st.speed;
@@ -414,6 +428,8 @@ function startReplay(e){
     const target = st.playing ? cruise*Math.min(1,0.25+0.75*Math.min(st.d,total-st.d)/Math.max(1,total*0.04)) : 0;
     st.v += (target-st.v)*(1-Math.exp(-3*dt));
     st.d = Math.min(total, st.d + st.v*dt);
+    // glide zoom and tilt toward the chosen values so changes never snap
+    const k=1-Math.exp(-5*dt); st.z+=(st.zT-st.z)*k; st.p+=(st.pT-st.p)*k;
     if(st.playing && st.d>=total){ st.playing=false; playEl.textContent="Replay"; }
     map.jumpTo(cam(st.d));
     dot.setLngLat(ll(rawAt(st.d))); trim(st.d/total);
@@ -431,9 +447,17 @@ function startReplay(e){
   seekEl.oninput=()=>{ st.d=seekEl.value/1000*total; st.v=0; if(st.d<total && !st.playing) playEl.textContent="Play"; };
   bar.querySelector("#rpSpeed").onclick=ev=>{ st.speed={1:2,2:4,4:.5,.5:1}[st.speed]; ev.target.textContent=(st.speed===.5?"½":st.speed)+"×"; };
   bar.querySelector("#rpExit").onclick=()=>replay.stop(true);
-  const onKey=ev=>{ if(ev.key==="Escape") replay.stop(true); if(ev.key===" "&&ev.target===document.body){ ev.preventDefault(); playEl.click(); } };
+  const onKey=ev=>{
+    if(ev.key==="Escape") replay.stop(true);
+    if(ev.target!==document.body && ev.target.tagName!=="BUTTON") return;
+    if(ev.key===" "){ ev.preventDefault(); playEl.click(); }
+    if(ev.key==="+"||ev.key==="="){ ev.preventDefault(); setZ(st.zT+0.25); }
+    if(ev.key==="-"||ev.key==="_"){ ev.preventDefault(); setZ(st.zT-0.25); }
+    if(ev.key==="ArrowUp"){ ev.preventDefault(); setP(st.pT+3); }
+    if(ev.key==="ArrowDown"){ ev.preventDefault(); setP(st.pT-3); }
+  };
   document.addEventListener("keydown",onKey);
-  replay={ stop(fly){ alive=false; clearTimeout(startTimer); cancelAnimationFrame(st.raf); document.removeEventListener("keydown",onKey); bar.remove(); title.remove(); dot.remove(); wrap.classList.remove("replay");
+  replay={ stop(fly){ alive=false; clearTimeout(startTimer); cancelAnimationFrame(st.raf); document.removeEventListener("keydown",onKey); bar.remove(); panel.remove(); title.remove(); dot.remove(); wrap.classList.remove("replay");
     lock.forEach(h=>map[h]&&map[h].enable()); map.setTerrain({source:"dem",exaggeration:prevEx});
     Object.values(markers).forEach(mk=>mk.getElement().style.visibility="");
     map.setLayoutProperty("trail-line","visibility","none"); map.setLayoutProperty("trail-glow","visibility","none");
