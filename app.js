@@ -197,6 +197,7 @@ function renderAll(){
   $("#readBtn").hidden=!e; $("#playBtn").hidden=!(e && e.route.length>1);
 }
 function select(id,{fly=false}={}){
+  if(replay) replay.stop(false); // picking another entry ends the replay and flies there instead
   selected=id; const e=entries.find(x=>x.id===id);
   renderAll(); if(e&&fly) flyTo(e);
   const btn=document.querySelector(`.entry[data-id="${CSS.escape(id)}"]`); if(btn) btn.scrollIntoView({block:"nearest"});
