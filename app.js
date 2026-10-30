@@ -130,7 +130,9 @@ function setupStyle(){
   map.addLayer({id:"routes-line",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":["case",["get","on"],3,1.6],"line-opacity":["case",["get","on"],1,0.6]}});
   map.addLayer({id:"replay-glow",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":12,"line-opacity":0.3,"line-blur":5}});
   map.addLayer({id:"replay-line",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":4}});
-  map.addLayer({id:"replay-head",type:"circle",source:"replay",filter:["==",["geometry-type"],"Point"],paint:{"circle-radius":7,"circle-color":"#39ff14","circle-stroke-color":"#0e0f0d","circle-stroke-width":2,"circle-blur":0.1,"circle-pitch-alignment":"map"}});
+  map.addSource("trail",{type:"geojson",lineMetrics:true,data:{type:"Feature",properties:{},geometry:{type:"LineString",coordinates:[[0,0],[0,0]]}}});
+  map.addLayer({id:"trail-glow",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#39ff14","line-width":12,"line-opacity":0.3,"line-blur":5,"line-trim-offset":[0,1]}});
+  map.addLayer({id:"trail-line",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#39ff14","line-width":4,"line-trim-offset":[0,1]}});
 }
 function routesGeo(){
   return {type:"FeatureCollection",features:entries.filter(e=>e.route.length>1).map(e=>({type:"Feature",properties:{id:e.id,on:e.id===selected},geometry:{type:"LineString",coordinates:e.route.map(ll)}}))};
@@ -349,56 +351,81 @@ function drawOnMap(root,start,done){
   m.bar.querySelector("#dDone").onclick=()=>end(true); m.bar.querySelector("#dCancel").onclick=()=>end(false);
 }
 
-/* ---------- 3D route replay: a free camera that follows the track over real terrain ---------- */
+/* ---------- 3D route replay: a free camera that follows the track over real terrain ----------
+   Smoothness comes from three things: the camera follows a resampled, smoothed copy of the route
+   (so GPS jitter and sharp corners don't jerk it), its position, height and heading are eased
+   every frame, and the drawn trail is revealed with a paint property instead of rebuilding data. */
 let replay=null;
 function startReplay(e){
   if(!map || e.route.length<2) return; if(replay) replay.stop();
   const route=e.route, cum=[0]; for(let i=1;i<route.length;i++) cum.push(cum[i-1]+hav(route[i-1],route[i]));
   const total=cum.at(-1)||1, miles=mi(total);
+  const rawAt=d=>{ d=Math.max(0,Math.min(total,d)); let lo=0,hi=cum.length-1; while(hi-lo>1){ const m=(lo+hi)>>1; if(cum[m]<=d) lo=m; else hi=m; } const f=(d-cum[lo])/((cum[hi]-cum[lo])||1); return [route[lo][0]+(route[hi][0]-route[lo][0])*f, route[lo][1]+(route[hi][1]-route[lo][1])*f]; };
+  // resample evenly, then a moving average for the camera's path
+  const step=Math.max(4,total/3000), n=Math.ceil(total/step)+1, rs=[];
+  for(let k=0;k<n;k++) rs.push(rawAt(Math.min(total,k*step)));
+  const h=Math.max(1,Math.round(Math.max(40,Math.min(700,total*0.02))/step)), pl=[0], pg=[0];
+  rs.forEach(p=>{ pl.push(pl.at(-1)+p[0]); pg.push(pg.at(-1)+p[1]); });
+  const sm=rs.map((_,k)=>{ const a=Math.max(0,k-h), b=Math.min(n-1,k+h), c=b-a+1; return [(pl[b+1]-pl[a])/c,(pg[b+1]-pg[a])/c]; });
+  const smAt=d=>{ const x=Math.max(0,Math.min(n-1,d/step)), k=Math.floor(x), f=x-k, a=sm[k], b=sm[Math.min(n-1,k+1)]; return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f]; };
+
   const wrap=$("#chartwrap"); wrap.classList.add("replay"); wrap.scrollIntoView({block:"nearest"});
   Object.values(markers).forEach(mk=>mk.getElement().style.visibility="hidden");
-  map.setPaintProperty("routes-line","line-opacity",["case",["get","on"],0.35,0.25]); map.setPaintProperty("routes-glow","line-opacity",0);
+  map.setPaintProperty("routes-line","line-opacity",["case",["get","on"],0.3,0.2]); map.setPaintProperty("routes-glow","line-opacity",0);
+  map.getSource("trail").setData({type:"Feature",properties:{},geometry:{type:"LineString",coordinates:route.map(ll)}});
+  const trim=p=>{ const v=[Math.min(.99999,Math.max(0,p)),1]; map.setPaintProperty("trail-line","line-trim-offset",v); map.setPaintProperty("trail-glow","line-trim-offset",v); };
+  trim(0); map.setLayoutProperty("trail-line","visibility","visible"); map.setLayoutProperty("trail-glow","visibility","visible");
+  const headEl=document.createElement("div"); headEl.className="rphead";
+  const head=new mapboxgl.Marker({element:headEl,pitchAlignment:"map",rotationAlignment:"map"}).setLngLat(ll(route[0])).addTo(map);
+
   const title=document.createElement("div"); title.className="replaytitle label"; title.innerHTML=`${esc(KINDS[e.kind])}<b>${esc(e.title)}</b>`; wrap.appendChild(title);
   const bar=document.createElement("div"); bar.className="replaybar";
   bar.innerHTML=`<button type="button" class="label" id="rpPlay">Pause</button><input type="range" id="rpSeek" min="0" max="1000" value="0" aria-label="Position along route"><span class="mono" id="rpRead"></span><button type="button" class="label" id="rpSpeed">1×</button><button type="button" class="label" id="rpExit">Exit</button>`;
   wrap.appendChild(bar);
-  const baseDur=Math.min(60,Math.max(18,10+miles*1.4))*1000;
-  const back=Math.max(700,Math.min(3500,total*0.05)), height=back*0.62;
-  const st={d:0,playing:true,speed:1,brg:null,intro:0,last:performance.now(),raf:0,startCam:null};
-  const at=d=>{ d=Math.max(0,Math.min(total,d)); let lo=0,hi=cum.length-1; while(hi-lo>1){ const m=(lo+hi)>>1; if(cum[m]<=d) lo=m; else hi=m; } const f=(d-cum[lo])/((cum[hi]-cum[lo])||1); return {p:[route[lo][0]+(route[hi][0]-route[lo][0])*f, route[lo][1]+(route[hi][1]-route[lo][1])*f], i:lo}; };
-  const elev = p => (map.queryTerrainElevation({lng:p[1],lat:p[0]},{exaggerated:true}) || 0);
-  try{ st.startCam=map.getFreeCameraOptions().position; }catch{}
+  const seekEl=bar.querySelector("#rpSeek"), readEl=bar.querySelector("#rpRead"), playEl=bar.querySelector("#rpPlay");
+
+  const baseDur=Math.min(70,Math.max(20,12+miles*1.5))*1000;
+  const back=Math.max(700,Math.min(3500,total*0.05)), height=back*0.6, look=Math.max(250,Math.min(2500,total*0.05));
+  const elev=p=>map.queryTerrainElevation({lng:p[1],lat:p[0]},{exaggerated:true});
+  const st={d:0,playing:true,speed:1,brg:null,ze:null,cam:null,intro:0,last:performance.now(),raf:0,snap:false,start:null,uiT:0};
+  try{ st.start=map.getFreeCameraOptions().position; }catch{}
+  const ease=(cur,want,rate,dt)=>cur+(want-cur)*(1-Math.exp(-rate*dt));
+
   function frame(now){
-    const dt=Math.min(.1,(now-st.last)/1000); st.last=now;
-    if(st.playing && st.intro>=1){ st.d+=total/(baseDur/1000)*st.speed*dt; if(st.d>=total){ st.d=total; st.playing=false; bar.querySelector("#rpPlay").textContent="Replay"; } }
-    st.intro=Math.min(1,st.intro+dt/2.2);
-    const {p,i}=at(st.d), look=Math.max(150,total*0.03);
-    const target=bearingOf(at(st.d-look).p, at(st.d+look).p);
-    if(st.brg===null) st.brg=target; else { const diff=((target-st.brg+540)%360)-180; st.brg=(st.brg+diff*Math.min(1,dt*(reduce?10:1.2))+360)%360; }
-    const camLL=destination(p,(st.brg+180)%360,back), ze=elev(p), camAlt=Math.max(elev(camLL),ze)+height;
-    const want=mapboxgl.MercatorCoordinate.fromLngLat({lng:camLL[1],lat:camLL[0]},camAlt);
+    const dt=Math.min(.05,(now-st.last)/1000); st.last=now;
+    if(st.playing && st.intro>=1){ st.d+=total/(baseDur/1000)*st.speed*dt; if(st.d>=total){ st.d=total; st.playing=false; playEl.textContent="Replay"; } }
+    st.intro=Math.min(1,st.intro+dt/2.4);
+    const tgt=smAt(st.d);
+    const wantBrg=bearingOf(smAt(st.d-look*0.5), smAt(st.d+look));
+    if(st.brg===null || st.snap) st.brg=wantBrg; else { const diff=((wantBrg-st.brg+540)%360)-180; st.brg=(st.brg+diff*(1-Math.exp(-(reduce?20:1.4)*dt))+360)%360; }
+    const zNow=elev(tgt); if(zNow!=null) st.ze = (st.ze==null||st.snap) ? zNow : ease(st.ze,zNow,2,dt); const ze=st.ze||0;
+    const camLL=destination(tgt,(st.brg+180)%360,back), zc=elev(camLL);
+    const wantAlt=Math.max(ze, zc==null?ze:zc-100)+height;
+    const want=mapboxgl.MercatorCoordinate.fromLngLat({lng:camLL[1],lat:camLL[0]},wantAlt);
+    if(!st.cam || st.snap) st.cam={x:want.x,y:want.y,z:want.z};
+    else { st.cam.x=ease(st.cam.x,want.x,4,dt); st.cam.y=ease(st.cam.y,want.y,4,dt); st.cam.z=ease(st.cam.z,want.z,1.5,dt); }
+    st.snap=false;
+    let P=st.cam;
+    if(st.start && st.intro<1){ const k=1-Math.pow(1-st.intro,3), s=st.start; P={x:s.x+(P.x-s.x)*k,y:s.y+(P.y-s.y)*k,z:s.z+(P.z-s.z)*k}; }
     const cam=map.getFreeCameraOptions();
-    if(st.startCam && st.intro<1){ const k=1-Math.pow(1-st.intro,3), s=st.startCam; cam.position=new mapboxgl.MercatorCoordinate(s.x+(want.x-s.x)*k, s.y+(want.y-s.y)*k, s.z+(want.z-s.z)*k); }
-    else cam.position=want;
+    cam.position=new mapboxgl.MercatorCoordinate(P.x,P.y,P.z);
     // aim at the target on the ground, not at sea level under it
-    const tgt=mapboxgl.MercatorCoordinate.fromLngLat({lng:p[1],lat:p[0]},ze), cz=cam.position.z, kk=cz/Math.max(1e-12,cz-tgt.z);
-    const aim=new mapboxgl.MercatorCoordinate(cam.position.x+(tgt.x-cam.position.x)*kk, cam.position.y+(tgt.y-cam.position.y)*kk, 0).toLngLat();
-    cam.lookAtPoint(aim); map.setFreeCameraOptions(cam);
-    const line=route.slice(0,i+1).map(ll); line.push(ll(p));
-    map.getSource("replay").setData({type:"FeatureCollection",features:[{type:"Feature",properties:{},geometry:{type:"LineString",coordinates:line.length>1?line:[ll(p),ll(p)]}},{type:"Feature",properties:{},geometry:{type:"Point",coordinates:ll(p)}}]});
-    bar.querySelector("#rpSeek").value=Math.round(st.d/total*1000);
-    bar.querySelector("#rpRead").textContent=`${mi(st.d).toFixed(1)} / ${miles.toFixed(1)} mi`;
+    const T=mapboxgl.MercatorCoordinate.fromLngLat({lng:tgt[1],lat:tgt[0]},ze), kk=P.z/Math.max(1e-12,P.z-T.z);
+    cam.lookAtPoint(new mapboxgl.MercatorCoordinate(P.x+(T.x-P.x)*kk, P.y+(T.y-P.y)*kk, 0).toLngLat());
+    map.setFreeCameraOptions(cam);
+    head.setLngLat(ll(rawAt(st.d))); trim(st.d/total);
+    if(now-st.uiT>100){ st.uiT=now; seekEl.value=Math.round(st.d/total*1000); readEl.textContent=`${mi(st.d).toFixed(1)} / ${miles.toFixed(1)} mi`; }
     st.raf=requestAnimationFrame(frame);
   }
-  bar.querySelector("#rpPlay").onclick=ev=>{ if(st.d>=total){ st.d=0; st.playing=true; } else st.playing=!st.playing; ev.target.textContent=st.playing?"Pause":"Play"; };
-  bar.querySelector("#rpSeek").oninput=ev=>{ st.d=ev.target.value/1000*total; st.intro=1; if(st.d<total && !st.playing) bar.querySelector("#rpPlay").textContent="Play"; };
+  playEl.onclick=()=>{ if(st.d>=total){ st.d=0; st.playing=true; st.snap=true; } else st.playing=!st.playing; playEl.textContent=st.playing?"Pause":"Play"; };
+  seekEl.oninput=()=>{ st.d=seekEl.value/1000*total; st.intro=1; st.snap=true; if(st.d<total && !st.playing) playEl.textContent="Play"; };
   bar.querySelector("#rpSpeed").onclick=ev=>{ st.speed={1:2,2:4,4:.5,.5:1}[st.speed]; ev.target.textContent=(st.speed===.5?"½":st.speed)+"×"; };
   bar.querySelector("#rpExit").onclick=()=>replay.stop(true);
-  const onKey=ev=>{ if(ev.key==="Escape") replay.stop(true); if(ev.key===" "&&ev.target===document.body){ ev.preventDefault(); bar.querySelector("#rpPlay").click(); } };
+  const onKey=ev=>{ if(ev.key==="Escape") replay.stop(true); if(ev.key===" "&&ev.target===document.body){ ev.preventDefault(); playEl.click(); } };
   document.addEventListener("keydown",onKey);
-  replay={ stop(fly){ cancelAnimationFrame(st.raf); document.removeEventListener("keydown",onKey); bar.remove(); title.remove(); wrap.classList.remove("replay");
+  replay={ stop(fly){ cancelAnimationFrame(st.raf); document.removeEventListener("keydown",onKey); bar.remove(); title.remove(); head.remove(); wrap.classList.remove("replay");
     Object.values(markers).forEach(mk=>mk.getElement().style.visibility="");
-    map.getSource("replay").setData({type:"FeatureCollection",features:[]});
+    map.setLayoutProperty("trail-line","visibility","none"); map.setLayoutProperty("trail-glow","visibility","none");
     map.setPaintProperty("routes-line","line-opacity",["case",["get","on"],1,0.6]); map.setPaintProperty("routes-glow","line-opacity",0.25);
     replay=null; if(fly) flyTo(e); } };
   st.raf=requestAnimationFrame(frame);
