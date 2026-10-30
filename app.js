@@ -4,7 +4,7 @@ const CFG = window.LOG_CONFIG || {};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const KINDS = {temple:"Temple & sacred site",backpacking:"Backpacking",highline:"Highline & rope swing",hike:"Day hike",climb:"Climbing & canyoneering",water:"Water & river",city:"City & culture",show:"Show & performance",road:"Road trip",other:"Other"};
+const KINDS = {temple:"Temple & sacred site",backpacking:"Backpacking",highline:"Highline & rope swing",hike:"Hike",trailrun:"Trail run",bike:"Bike ride",mtb:"Mountain bike",climb:"Climbing & canyoneering",water:"Water & river",city:"City & culture",show:"Show & performance",road:"Road trip",other:"Other"};
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const STYLES = { satellite:"mapbox://styles/mapbox/satellite-streets-v12", terrain:"mapbox://styles/mapbox/outdoors-v12" };
 
