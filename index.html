@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Log</title>
+<meta name="description" content="Michael's log of adventures, pinned where they happened.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="ledger" aria-label="Entries by date">
+    <h1 class="mark">Log</h1>
+    <div class="tally label">
+      <div><b id="nEntries">0</b>Entries</div>
+      <div><b id="nDays">0</b>Days out</div>
+      <div><b id="nMiles">0</b>Miles traced</div>
+    </div>
+    <button class="add label" id="addBtn" type="button" hidden>Add Entry</button>
+    <div class="list" id="list"><p class="emptylist">Loading…</p></div>
+    <div class="foot label">
+      <span id="who"></span>
+      <button type="button" id="authBtn" class="link" hidden>Editor sign in</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="chartwrap" id="chartwrap" aria-label="Map">
+      <div id="map"></div>
+      <div class="mapctl" id="mapctl">
+        <button type="button" data-z="all" class="label">All</button>
+        <button type="button" data-z="globe" class="label">Globe</button>
+        <button type="button" data-z="style" class="label" id="styleBtn">Terrain</button>
+      </div>
+      <div class="mapacts">
+        <button class="label solidbtn" id="playBtn" type="button" hidden>▶ Replay route</button>
+        <button class="label" id="readBtn" type="button" hidden>Read entry ↓</button>
+      </div>
+      <div class="maperr" id="mapErr" hidden></div>
+    </section>
+    <section class="sheetwrap" id="sheet" aria-live="polite"><div class="sheet-in" id="sheetIn"></div></section>
+  </main>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="config.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

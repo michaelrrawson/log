@@ -1,0 +1,5 @@
+[
+  {"id":"wat-phu-tok","title":"Wat Jetirakhiri Temple","kind":"temple","place":"Phu Tok, Bueng Kan, Thailand","start_date":"2026-05-22","end_date":null,"lat":18.1375,"lng":103.87917,"route":[],"notes":"","photos":[]},
+  {"id":"zion-traverse","title":"Zion Traverse","kind":"backpacking","place":"Zion National Park, Utah","start_date":"2026-10-08","end_date":"2026-10-10","lat":37.3359,"lng":-113.0412,"route":[[37.4516,-113.1919],[37.3925,-113.1347],[37.355,-113.065],[37.3596,-113.0147],[37.3197,-112.9971],[37.2706,-112.9468],[37.2594,-112.9509],[37.2786,-112.9405],[37.2346,-112.877]],"notes":"","photos":[]},
+  {"id":"fruit-bowl","title":"Fruit Bowl Rope Swing","kind":"highline","place":"Fruit Bowl highline area, Moab, Utah","start_date":"2026-10-24","end_date":null,"lat":38.532207,"lng":-109.918676,"route":[],"notes":"","photos":[]}
+]
