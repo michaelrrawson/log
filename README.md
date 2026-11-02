@@ -31,6 +31,7 @@ Edit an entry, then under Route choose:
 - **Share links**: every entry has its own address (`?e=<id>`); "Copy link" on an entry copies it.
 - **Trips** (switched off for now; set `TRIPS_ON = true` in app.js to bring them back, the 7 trips are still saved): group entries into chapters. Pick one in the list to see it on the map with a day-by-day page; share it with `?t=<id>`. Assign entries to a trip (or start a new one) from the entry's Edit form.
 - **Summits**: peaks bagged on each entry. "Find on route" in the Edit form lists named summits the route passes close to. Totals keep the full peak list.
+- **Ticklists**: progress on peak lists, from the summits on your entries. Lists live in `ticklists.js` (starting with SummitPost's Wasatch 11,000-footers); add one by copying that block.
 - **Calendar**: on the totals page, a square for every day of the year, filled on days out (darker = more miles). Tap a square to open that day.
 - **Route shapes**: a tiny drawing of each route next to it in the list.
 - **Extremes**: highest summit, farthest from home, and the north/south/east/west-most points you've been.

@@ -509,12 +509,32 @@ function totalsHTML(){
     ${withV&&withV<v.length?`<p class="tothint">Vertical and moving time come from Strava and cover ${withV} of these ${v.length} entries.</p>`:""}
     ${tripRows.length?`<div class="block"><div class="bhead label"><span>Trips</span><span class="mono">${tripRows.length}</span></div><div class="tablewrap"><table class="tot"><thead><tr><th scope="col" class="label">Trip</th><th scope="col" class="label">Dates</th><th scope="col" class="label">Days</th><th scope="col" class="label">Miles</th></tr></thead><tbody>${tripRows.map(({t,l})=>{ const [a,b]=tripRange(t.id); return `<tr><th scope="row"><button type="button" data-opentrip="${esc(t.id)}">${esc(t.title)}</button></th><td>${esc(fmtRange(a,b))}</td><td>${days(a,b)}</td><td>${Math.round(miles(l)).toLocaleString()}</td></tr>`; }).join("")}</tbody></table></div></div>`:""}
     ${peaks.length?`<div class="block"><div class="bhead label"><span>Summits</span><span class="mono">${peaks.length} peaks</span></div><div class="tablewrap"><table class="tot"><thead><tr><th scope="col" class="label">Peak</th><th scope="col" class="label">Elevation</th><th scope="col" class="label">Times</th><th scope="col" class="label">Last</th></tr></thead><tbody>${peaks.map(p=>{ const last=p.visits.at(-1); return `<tr><th scope="row">${esc(p.name)}</th><td>${elevTxt(p)||"—"}</td><td>${p.visits.length}</td><td><button type="button" data-open="${esc(last.id)}">${esc(fmtRange(last.start_date))}</button></td></tr>`; }).join("")}</tbody></table></div></div>`:""}
+    ${ticklistsHTML(v)}
     ${calendarHTML(v)}
     ${extremesHTML(v)}
     <div class="block"><div class="bhead label"><span>By activity</span></div><div class="tablewrap"><table class="tot">${head("Activity")}<tbody>${byKind.map(g=>row(g.label,g.l)).join("")}</tbody></table></div></div>
     <div class="block"><div class="bhead label"><span>By year</span></div><div class="tablewrap"><table class="tot">${head("Year")}<tbody>${byYear.map(g=>row(g.label,g.l)).join("")}</tbody></table></div></div>
     ${byGear.length?`<div class="block"><div class="bhead label"><span>Gear</span><span class="mono">miles on each</span></div><div class="tablewrap"><table class="tot">${head("Item")}<tbody>${byGear.map(([g,l])=>row(esc(g),l)).join("")}</tbody></table></div></div>`:""}`;
 }
+// Peak ticklists (lists live in ticklists.js): which peaks on each list you've summited
+function ticklistsHTML(v){
+  const lists=window.LOG_TICKLISTS||[]; if(!lists.length) return "";
+  const climbs=v.flatMap(e=>e.peaks.map(p=>({p,e})));
+  const out=lists.map(L=>{
+    const rows=[...L.peaks].sort((a,b)=>b.ft-a.ft).map(pk=>{ const hits=pk.match?climbs.filter(c=>pk.match.test(c.p.name.trim())):[]; return {pk,hits}; });
+    const done=rows.filter(r=>r.hits.length), ranked=rows.filter(r=>r.pk.ranked), rDone=ranked.filter(r=>r.hits.length);
+    const pct=Math.round(done.length/rows.length*100);
+    return `<div class="tick">
+      <div class="tickhead"><span class="tt">${esc(L.title)}</span><span class="mono">${done.length} / ${rows.length}</span></div>
+      <div class="bar" role="img" aria-label="${done.length} of ${rows.length} done"><i style="width:${pct}%"></i></div>
+      <p class="ticksub">${rDone.length} of ${ranked.length} ranked · ${esc(L.note||"")} <a href="${esc(L.source)}" target="_blank" rel="noopener">${esc(L.sourceName||"Source")}</a></p>
+      <details><summary class="label">Show the list</summary><ol class="ticklist">${rows.map(({pk,hits})=>{ const last=hits.map(h=>h.e).sort((a,b)=>String(b.start_date).localeCompare(String(a.start_date)))[0];
+        return `<li class="${hits.length?"done":""}"><span class="box" aria-hidden="true"></span><span class="n">${esc(pk.name)}${pk.ranked?"":` <span class="ur">unranked</span>`}</span><span class="mono">${pk.ft.toLocaleString()} ft</span><span class="when">${last?`<button type="button" data-open="${esc(last.id)}">${esc(fmtRange(last.start_date))}</button>${hits.length>1?` ×${hits.length}`:""}`:""}</span></li>`; }).join("")}</ol></details>
+    </div>`;
+  }).join("");
+  return `<div class="block"><div class="bhead label"><span>Ticklists</span></div>${out}</div>`;
+}
+
 // Calendar: one square per day, filled on days you were out
 function calendarHTML(v){
   const dayMap=new Map(); // "YYYY-MM-DD" -> [entries]

@@ -149,6 +149,27 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .btn[disabled]{opacity:.4;cursor:default}
 .del{color:var(--danger);text-decoration:underline;text-underline-offset:3px}
 .intro{max-width:52ch;color:var(--muted)}
+.tick{max-width:720px;margin-bottom:22px}
+.tickhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.tickhead .tt{font-weight:600;font-size:16px;letter-spacing:-.01em}
+.tickhead .mono{font-size:14px}
+.bar{height:6px;background:var(--tile);margin:8px 0 6px}
+.bar i{display:block;height:100%;background:var(--fg)}
+.ticksub{color:var(--muted);font-size:13px;margin:0 0 8px}
+.ticksub a{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.tick summary{cursor:pointer;color:var(--muted);padding:4px 0;list-style:none}
+.tick summary::-webkit-details-marker{display:none}
+.tick summary::before{content:"+ "}
+.tick details[open] summary::before{content:"− "}
+.ticklist{list-style:none;margin:6px 0 0;padding:0}
+.ticklist li{display:grid;grid-template-columns:14px minmax(0,1fr) auto 104px;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.ticklist .box{width:10px;height:10px;border:1px solid var(--muted);align-self:center}
+.ticklist li.done .box{background:var(--fg);border-color:var(--fg)}
+.ticklist li:not(.done) .n{color:var(--muted)}
+.ticklist .ur{font-size:11px;color:var(--muted)}
+.ticklist .mono{font-size:12px;color:var(--muted);text-align:right}
+.ticklist .when{font-size:12px;text-align:right;color:var(--muted);font-family:var(--mono)}
+.ticklist .when button{text-decoration:underline;text-underline-offset:3px;font:inherit;color:var(--fg)}
 .calyear{margin-bottom:14px;max-width:760px}
 .calhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
 .calhead .label{color:var(--fg)}
@@ -226,6 +247,9 @@ button{cursor:pointer;background:none;border:0;padding:0}
   .replaybar{gap:10px;padding:8px 10px}
   .viewpanel .hint{display:none}
   .tothint{margin-top:-16px}
+  .ticklist li{grid-template-columns:14px minmax(0,1fr) auto;row-gap:2px}
+  .ticklist .when{grid-column:2/4;text-align:left}
+  .ticklist .when:empty{display:none}
   .daylist button,.otdlist button{grid-template-columns:minmax(0,1fr)}
   .daylist .m{grid-column:1}
 }
