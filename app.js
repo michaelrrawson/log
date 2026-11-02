@@ -68,7 +68,7 @@ async function loadEntries(){
   try{ const r=await fetch("data/entries.json",{cache:"no-store"}); entries=(await r.json()).map(norm); source=sb?"backup":"file"; }
   catch{ entries=[]; source="none"; }
 }
-async function refresh(keepView){ await loadEntries(); if(selected && !entries.find(e=>e.id===selected)){ selected=null; setUrl(null); } setupTimelineRange(); renderAll(); if(!keepView && !selected) fitAll(false); }
+async function refresh(keepView){ await loadEntries(); if(selected && !entries.find(e=>e.id===selected)){ selected=null; setUrl(null); } renderAll(); if(!keepView && !selected) fitAll(false); }
 
 /* ---------- auth: one editor login by email link ---------- */
 async function initAuth(){
@@ -152,13 +152,6 @@ function setupStyle(){
   map.addLayer({id:"routes-line",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":["case",["get","on"],3,1.6],"line-opacity":["case",["get","on"],1,0.6]}});
   map.addLayer({id:"replay-glow",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":12,"line-opacity":0.3,"line-blur":5}});
   map.addLayer({id:"replay-line",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":4}});
-  map.addSource("heat",{type:"geojson",data:heatGeo()});
-  map.addLayer({id:"heat",type:"heatmap",source:"heat",layout:{visibility:heatOn?"visible":"none"},paint:{
-    "heatmap-weight":0.1,
-    "heatmap-intensity":["interpolate",["linear"],["zoom"],1,4,5,2,8,0.9,12,0.9,15,1.4],
-    "heatmap-radius":["interpolate",["linear"],["zoom"],1,8,5,8,8,7,12,10,15,18],
-    "heatmap-opacity":0.9,
-    "heatmap-color":["interpolate",["linear"],["heatmap-density"],0,"rgba(57,255,20,0)",0.15,"rgba(57,255,20,0.35)",0.45,"rgba(120,255,60,0.75)",0.75,"rgba(210,255,120,0.95)",1,"rgb(255,255,235)"]}},"routes-glow");
   map.addSource("trail",{type:"geojson",lineMetrics:true,data:{type:"Feature",properties:{},geometry:{type:"LineString",coordinates:[[0,0],[0,0]]}}});
   map.addLayer({id:"trail-glow",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#39ff14","line-width":12,"line-opacity":0.3,"line-blur":5,"line-trim-offset":[0,1]}});
   map.addLayer({id:"trail-line",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#39ff14","line-width":4,"line-trim-offset":[0,1]}});
@@ -167,29 +160,13 @@ function setupStyle(){
 function routesGeo(){
   return {type:"FeatureCollection",features:entries.filter(e=>e.route.length>1).map(e=>({type:"Feature",properties:{id:e.id,on:e.id===selected},geometry:{type:"LineString",coordinates:e.route.map(ll)}}))};
 }
-function heatGeo(){ // points every ~120 m along each route (or the pin, if no route)
-  const f=[];
-  for(const e of entries){
-    const r=e.route;
-    if(r.length<2){ f.push({type:"Feature",properties:{id:e.id},geometry:{type:"Point",coordinates:[e.lng,e.lat]}}); continue; }
-    let carry=0;
-    for(let i=1;i<r.length;i++){ const d=hav(r[i-1],r[i]); let t=120-carry;
-      while(t<=d){ const k=t/d; f.push({type:"Feature",properties:{id:e.id},geometry:{type:"Point",coordinates:[r[i-1][1]+(r[i][1]-r[i-1][1])*k,r[i-1][0]+(r[i][0]-r[i-1][0])*k]}}); t+=120; }
-      carry=(carry+d)%120; }
-  }
-  return {type:"FeatureCollection",features:f};
-}
-function drawRoutes(){ if(map && map.getSource("routes")){ map.getSource("routes").setData(routesGeo()); map.getSource("heat").setData(heatGeo()); applyVisibility(); } }
-let heatOn=false;
+function drawRoutes(){ if(map && map.getSource("routes")){ map.getSource("routes").setData(routesGeo()); applyVisibility(); } }
 function applyVisibility(){
   const ids=new Set(shown().map(e=>e.id)), list=["literal",[...ids]];
-  for(const [id,m] of Object.entries(markers)) m.getElement().style.display = (ids.has(id) && !heatOn) ? "" : "none";
+  for(const [id,m] of Object.entries(markers)) m.getElement().style.display = ids.has(id) ? "" : "none";
   if(!map || !map.getLayer("routes-line")) return;
   const f=["in",["get","id"],list];
-  ["routes-line","routes-glow","heat"].forEach(l=>map.setFilter(l,f));
-  map.setLayoutProperty("heat","visibility",heatOn?"visible":"none");
-  map.setLayoutProperty("routes-line","visibility",heatOn?"none":"visible");
-  map.setLayoutProperty("routes-glow","visibility",heatOn?"none":"visible");
+  ["routes-line","routes-glow"].forEach(l=>map.setFilter(l,f));
 }
 function drawMarkers(){
   if(!map) return;
@@ -224,14 +201,12 @@ function setupMapButtons(){
   $("#mapctl").addEventListener("click",ev=>{ const b=ev.target.closest("button"); if(!b||!map) return;
     if(b.dataset.z==="all") fitAll();
     if(b.dataset.z==="globe") map.flyTo({center:map.getCenter(),zoom:1.6,pitch:0,bearing:0,duration:reduce?0:2500,essential:true});
-    if(b.dataset.z==="heat"){ heatOn=!heatOn; b.setAttribute("aria-pressed",String(heatOn)); b.classList.toggle("on",heatOn); applyVisibility();
-      return; }
     if(b.dataset.z==="style"){ styleKey = styleKey==="satellite"?"terrain":"satellite"; b.textContent = styleKey==="satellite"?"Terrain":"Satellite"; map.setStyle(STYLES[styleKey]); map.once("style.load",()=>{ drawRoutes(); }); }
   });
 }
 
-/* ---------- search, filters and the timeline: one rule decides what's shown everywhere ---------- */
-const filt={q:"",kinds:new Set(),years:new Set(),until:null}; // until: "YYYY-MM-DD" or null for everything
+/* ---------- search and filters: one rule decides what's shown everywhere ---------- */
+const filt={q:"",kinds:new Set(),years:new Set()};
 const yearOf=e=>String(e.start_date||"").slice(0,4)||"Undated";
 const hay=e=>[e.title,e.place,KINDS[e.kind],e.notes,...e.gear,yearOf(e)].join(" ").toLowerCase();
 function matchesFilters(e){
@@ -240,7 +215,7 @@ function matchesFilters(e){
   if(filt.q){ const h=hay(e); if(!filt.q.split(/\s+/).every(w=>h.includes(w))) return false; }
   return true;
 }
-const isShown = e => matchesFilters(e) && (!filt.until || String(e.start_date)<=filt.until);
+const isShown = matchesFilters;
 const shown = () => entries.filter(isShown);
 const filtering = () => !!(filt.q||filt.kinds.size||filt.years.size);
 
@@ -263,50 +238,9 @@ function setupFilters(){
     afterFilter(); });
 }
 function afterFilter(){
-  renderFilters(); setupTimelineRange(); applyVisibility(); renderTally(); renderList(); if(!selected) renderSheet();
+  renderFilters(); applyVisibility(); renderTally(); renderList(); if(!selected) renderSheet();
   const vis=shown(); if(map && vis.length && filtering()) fitTo(vis);
 }
-
-/* ---------- timeline scrubber ---------- */
-let tl={days:[],playing:false,raf:0};
-const dayStr = t => new Date(t).toISOString().slice(0,10);
-function setupTimelineRange(){
-  const ds=entries.filter(matchesFilters).map(e=>Date.parse(e.start_date)).filter(isFinite);
-  const el=$("#tlRange");
-  if(ds.length<2){ $("#timeline").hidden=true; filt.until=null; return; }
-  if(!$("#chartwrap").classList.contains("replay")) $("#timeline").hidden=false;
-  const lo=Math.min(...ds), hi=Math.max(...ds); tl.lo=lo; tl.hi=hi;
-  el.min=0; el.max=Math.round((hi-lo)/864e5); el.step=1;
-  if(!filt.until) el.value=el.max; else el.value=Math.max(0,Math.min(+el.max,Math.round((Date.parse(filt.until)-lo)/864e5)));
-  tlLabel();
-}
-function tlLabel(){
-  const el=$("#tlRange"), atEnd=+el.value>=+el.max;
-  const d=parseD(dayStr(tl.lo+ +el.value*864e5));
-  $("#tlRead").textContent = atEnd ? "All time" : `Through ${d.d} ${MON[d.m-1]} ${d.y}`;
-  $("#tlCount").textContent = `${shown().length}`;
-}
-let tlUi=0;
-function tlSet(v,{quick=false}={}){
-  const el=$("#tlRange"); el.value=v;
-  filt.until = +el.value>=+el.max ? null : dayStr(tl.lo+ +el.value*864e5);
-  applyVisibility(); tlLabel();
-  const now=performance.now();
-  if(!quick || now-tlUi>180){ tlUi=now; renderTally(); renderList(); if(!selected) renderSheet(); }
-}
-function setupTimeline(){
-  const el=$("#tlRange"), btn=$("#tlPlay");
-  el.addEventListener("input",()=>{ tlStop(); tlSet(+el.value,{quick:true}); });
-  el.addEventListener("change",()=>tlSet(+el.value));
-  btn.onclick=()=>{ if(tl.playing){ tlStop(); return; }
-    if(+el.value>=+el.max) tlSet(0);
-    tl.playing=true; btn.textContent="❚❚"; btn.setAttribute("aria-label","Pause timeline");
-    const span=+el.max||1, secs=Math.min(20,Math.max(8,span/40)); let last=performance.now(), pos=+el.value;
-    const step=now=>{ if(!tl.playing) return; pos=Math.min(span,pos+(now-last)/1000*span/secs); last=now;
-      tlSet(Math.floor(pos),{quick:true}); if(pos>=span){ tlStop(); tlSet(span); return; } tl.raf=requestAnimationFrame(step); };
-    tl.raf=requestAnimationFrame(step); };
-}
-function tlStop(){ tl.playing=false; cancelAnimationFrame(tl.raf); const b=$("#tlPlay"); b.textContent="▶"; b.setAttribute("aria-label","Play timeline"); }
 
 /* ---------- ledger + sheet ---------- */
 const sorted = () => [...entries].sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
@@ -399,13 +333,14 @@ function renderSheet(){
       if(e.photos.length) await sb.storage.from("photos").remove(e.photos.map(p=>p.path)); selected=null; toast("Deleted"); refresh(true); } });
 }
 /* ---------- totals: what the sheet shows when no entry is picked ---------- */
+const US_STATES=new Set("Alabama Alaska Arizona Arkansas California Colorado Connecticut Delaware Florida Georgia Hawaii Idaho Illinois Indiana Iowa Kansas Kentucky Louisiana Maine Maryland Massachusetts Michigan Minnesota Mississippi Missouri Montana Nebraska Nevada New_Hampshire New_Jersey New_Mexico New_York North_Carolina North_Dakota Ohio Oklahoma Oregon Pennsylvania Rhode_Island South_Carolina South_Dakota Tennessee Texas Utah Vermont Virginia Washington West_Virginia Wisconsin Wyoming".split(" ").map(x=>x.replace(/_/g," ")));
 const hm = s => { const h=Math.floor(s/3600), m=Math.round((s%3600)/60); return h?`${h}h ${String(m).padStart(2,"0")}m`:`${m}m`; };
 function totalsHTML(){
   const v=shown(), all=entries.length;
   const sum=(list,f)=>list.reduce((s,e)=>s+f(e),0);
   const miles=l=>mi(sum(l,entryMeters)), vft=l=>ft(sum(l,vert));
   const withV=v.filter(e=>vert(e)).length, mov=sum(v,e=>+(e.stats&&e.stats.moving_s)||0);
-  const scope = filt.until||filtering() ? `${v.length} of ${all} entries${filt.until?` through ${fmtRange(filt.until)}`:""}` : "Everything logged";
+  const scope = filtering() ? `${v.length} of ${all} entries` : "Everything logged";
   const note = source==="backup" ? `<p class="tothint">Showing the backup copy: the live database didn't answer.</p>` : "";
   if(!v.length) return `<div class="intro"><span class="label">Totals</span><h2 class="ttl">Nothing matches</h2><p>Change the search or filters to see totals.</p></div>`;
   const group=(keyf,label)=>{ const m=new Map(); v.forEach(e=>{ const k=keyf(e); (m.get(k)||m.set(k,[]).get(k)).push(e); }); return [...m.entries()].map(([k,l])=>({k,label:label(k),l})); };
@@ -415,9 +350,13 @@ function totalsHTML(){
   const byYear=group(yearOf,y=>esc(y)).sort((a,b)=>b.k.localeCompare(a.k));
   const gearMap=new Map(); v.forEach(e=>e.gear.forEach(g=>{ (gearMap.get(g)||gearMap.set(g,[]).get(g)).push(e); }));
   const byGear=[...gearMap.entries()].sort((a,b)=>miles(b[1])-miles(a[1])).slice(0,12);
-  const longest=[...v].sort((a,b)=>entryMeters(b)-entryMeters(a))[0];
+  const longestOf=kinds=>[...v].filter(e=>kinds.includes(e.kind)&&entryMeters(e)).sort((a,b)=>entryMeters(b)-entryMeters(a))[0];
+  const longRide=longestOf(["bike","mtb"]), longRun=longestOf(["trailrun"]);
+  const spec=(label,e)=>e?`<div><dt class="label">${label}</dt><dd><button type="button" data-open="${esc(e.id)}">${esc(e.title)}</button> · ${mi(entryMeters(e)).toFixed(1)} mi</dd></div>`:"";
   const biggest=withV?[...v].sort((a,b)=>vert(b)-vert(a))[0]:null;
-  const countries=new Set(v.map(e=>(e.place.split(",").pop()||"").trim()).filter(Boolean));
+  const tails=v.map(e=>(e.place.split(",").pop()||"").trim()).filter(Boolean);
+  const states=new Set(tails.filter(t=>US_STATES.has(t)));
+  const countries=new Set(tails.map(t=>US_STATES.has(t)?"United States":t));
   return `<div class="kicker label"><span>Totals</span><span>${esc(scope)}</span></div>
     <h2 class="ttl">${Math.round(miles(v)).toLocaleString()} miles${withV?`, ${Math.round(vft(v)).toLocaleString()} ft up`:""}</h2>
     <p class="place">Pick an entry from the list or a pin to read it.</p>${note}
@@ -427,8 +366,10 @@ function totalsHTML(){
       <div><dt class="label">Miles</dt><dd>${miles(v).toFixed(1)}</dd></div>
       ${withV?`<div><dt class="label">Vertical</dt><dd>${Math.round(vft(v)).toLocaleString()} ft</dd></div>`:""}
       ${mov?`<div><dt class="label">Moving time</dt><dd>${hm(mov)}</dd></div>`:""}
-      <div><dt class="label">States &amp; countries</dt><dd>${countries.size}</dd></div>
-      ${longest&&entryMeters(longest)?`<div><dt class="label">Longest</dt><dd><button type="button" data-open="${esc(longest.id)}">${esc(longest.title)}</button> · ${mi(entryMeters(longest)).toFixed(1)} mi</dd></div>`:""}
+      <div><dt class="label">States</dt><dd>${states.size}</dd></div>
+      <div><dt class="label">Countries</dt><dd>${countries.size}</dd></div>
+      ${spec("Longest ride",longRide)}
+      ${spec("Longest trail run",longRun)}
       ${biggest?`<div><dt class="label">Most vertical</dt><dd><button type="button" data-open="${esc(biggest.id)}">${esc(biggest.title)}</button> · ${Math.round(ft(vert(biggest))).toLocaleString()} ft</dd></div>`:""}
     </dl>
     ${withV&&withV<v.length?`<p class="tothint">Vertical and moving time come from Strava and cover ${withV} of these ${v.length} entries.</p>`:""}
@@ -584,7 +525,7 @@ function startReplay(e){
   const zoom=Math.max(12.6,Math.min(15.2,15.6-Math.log2(Math.max(1,total/1500))*0.55)), pitch=reduce?0:54;
   const baseDur=Math.min(75,Math.max(22,14+miles*1.6))*1000;
 
-  tlStop(); const wrap=$("#chartwrap"); wrap.classList.add("replay"); wrap.scrollIntoView({block:"nearest"});
+  const wrap=$("#chartwrap"); wrap.classList.add("replay"); wrap.scrollIntoView({block:"nearest"});
   Object.values(markers).forEach(mk=>mk.getElement().style.visibility="hidden");
   map.setPaintProperty("routes-line","line-opacity",["case",["get","on"],0.3,0.2]); map.setPaintProperty("routes-glow","line-opacity",0);
   map.getSource("trail").setData({type:"Feature",properties:{},geometry:{type:"LineString",coordinates:route.map(ll)}});
@@ -665,11 +606,11 @@ function startReplay(e){
 /* ---------- start ---------- */
 $("#addBtn").onclick=()=>openForm(null);
 $("#tally").onclick=()=>{ select(null); $("#sheet").scrollIntoView({behavior:reduce?"auto":"smooth"}); };
-initMap(); setupMapButtons(); setupFilters(); setupTimeline(); stravaReturn();
+initMap(); setupMapButtons(); setupFilters(); stravaReturn();
 loadEntries().then(()=>{
   const want=new URL(location.href).searchParams.get("e"), linked=want&&entries.find(e=>e.id===want);
   if(linked) selected=linked.id; else if(want) setUrl(null);
-  setupTimelineRange(); renderAll();
+  renderAll();
   const go=()=>{ drawRoutes(); setTimeout(()=>linked?flyTo(linked):fitAll(true),400); };
   if(map){ if(map.loaded()) go(); else map.once("load",go); }
   if(linked){ document.title=`${linked.title} · Log`; const b=document.querySelector(`.entry[data-id="${CSS.escape(linked.id)}"]`); if(b) b.scrollIntoView({block:"center"}); window.scrollTo(0,0); }

@@ -68,16 +68,9 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .mapctl button{height:32px;padding:0 10px;border-bottom:1px solid var(--line);color:var(--fg);font-size:10px}
 .mapctl button:last-child{border-bottom:0}
 .mapctl button:hover{background:var(--tile)}
-.mapctl button.on{background:var(--fg);color:var(--bg)}
-.mapacts{position:absolute;z-index:3;left:50%;bottom:76px;transform:translateX(-50%);display:flex;gap:8px}
+.mapacts{position:absolute;z-index:3;left:50%;bottom:28px;transform:translateX(-50%);display:flex;gap:8px}
 .mapacts button{background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:9px 14px;white-space:nowrap}
 .mapacts .solidbtn{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-.timeline{position:absolute;z-index:3;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));width:min(620px,calc(100% - 24px));display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--line);padding:7px 12px}
-.timeline input{flex:1;min-width:40px;accent-color:var(--fg)}
-.timeline button{width:22px;font-size:12px;line-height:1}
-.timeline .mono{font-size:12px;white-space:nowrap}
-.timeline .tlcount{color:var(--muted);min-width:2.5ch;text-align:right}
-.mapboxgl-ctrl-bottom-left,.mapboxgl-ctrl-bottom-right{bottom:58px}
 .maperr{position:absolute;inset:auto 12px 12px 12px;z-index:4;background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:12px 14px;max-width:520px}
 .mapboxgl-ctrl-group{border-radius:0!important;box-shadow:none!important;border:1px solid var(--line)}
 .mapboxgl-ctrl-scale{font-family:var(--mono);border-radius:0}
@@ -96,8 +89,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .pickbar button{text-decoration:underline;text-underline-offset:3px;color:inherit;letter-spacing:inherit;text-transform:inherit;font-size:inherit}
 
 /* replay */
-.replay .mapboxgl-ctrl-bottom-left,.replay .mapboxgl-ctrl-bottom-right{bottom:0}
-.replay .mapctl,.replay .mapacts,.replay .timeline,.replay .mapboxgl-ctrl-bottom-right,.replay .mapboxgl-ctrl-top-right{display:none}
+.replay .mapctl,.replay .mapacts,.replay .mapboxgl-ctrl-bottom-right,.replay .mapboxgl-ctrl-top-right{display:none}
 .replaybar{position:absolute;z-index:7;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:var(--bg);border:1px solid var(--line);padding:8px 14px;width:min(600px,calc(100% - 24px))}
 .replaybar input{flex:1;min-width:60px;accent-color:var(--fg)}
 .replaybar .mono{font-size:12px;white-space:nowrap;color:var(--muted)}
@@ -193,9 +185,6 @@ button{cursor:pointer;background:none;border:0;padding:0}
   .fields{grid-template-columns:1fr}
   .replaybar{gap:10px;padding:8px 10px}
   .viewpanel .hint{display:none}
-  .timeline{gap:8px;padding:6px 10px}
-  .timeline #tlRead{font-size:11px}
-  .mapacts{bottom:64px}
   .tothint{margin-top:-16px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

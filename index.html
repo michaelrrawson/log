@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css">
-<link rel="stylesheet" href="style.css?v=2611021429">
+<link rel="stylesheet" href="style.css?v=2611021609">
 </head>
 <body>
 <div class="app">
@@ -40,17 +40,11 @@
       <div class="mapctl" id="mapctl">
         <button type="button" data-z="all" class="label">All</button>
         <button type="button" data-z="globe" class="label">Globe</button>
-        <button type="button" data-z="heat" class="label" aria-pressed="false">Heat</button>
         <button type="button" data-z="style" class="label" id="styleBtn">Terrain</button>
       </div>
       <div class="mapacts">
         <button class="label solidbtn" id="playBtn" type="button" hidden>▶ Replay route</button>
         <button class="label" id="readBtn" type="button" hidden>Read entry ↓</button>
-      </div>
-      <div class="timeline" id="timeline" hidden>
-        <button type="button" id="tlPlay" aria-label="Play timeline">▶</button>
-        <input type="range" id="tlRange" min="0" max="1" value="1" aria-label="Show entries up to this date">
-        <span class="mono" id="tlRead">All time</span><span class="mono tlcount" id="tlCount"></span>
       </div>
       <div class="maperr" id="mapErr" hidden></div>
     </section>
@@ -60,9 +54,9 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=2611021429"></script>
+<script src="config.js?v=2611021609"></script>
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="app.js?v=2611021429"></script>
+<script src="app.js?v=2611021609"></script>
 </body>
 </html>

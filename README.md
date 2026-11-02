@@ -25,9 +25,7 @@ Edit an entry, then under Route choose:
 
 ## Features
 
-- **Search and filter**: the search box matches titles, places, notes and gear; Filter picks years and activities. Pins, routes, the heatmap and the totals all follow the filter.
-- **Timeline**: the slider under the map shows everything up to a date; ▶ plays your adventures in order.
-- **Heat**: switches pins and lines for a heatmap of every route.
+- **Search and filter**: the search box matches titles, places, notes and gear; Filter picks years and activities. Pins, routes and the totals all follow the filter.
 - **Totals**: click the numbers at the top of the list. Breaks down by activity, year and gear (miles on each pair of shoes or bike).
 - **Gear**: one item per line when editing an entry.
 - **Share links**: every entry has its own address (`?e=<id>`); "Copy link" on an entry copies it.
