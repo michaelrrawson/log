@@ -60,16 +60,18 @@ let entries=[], trips=[], selected=null, selTrip=null, canEdit=false, source="";
 const photoUrl = p => sb ? sb.storage.from("photos").getPublicUrl(p.path).data.publicUrl : (p.url||"");
 function norm(r){ return {...r, lat:+r.lat, lng:+r.lng, route:validRoute(r.route), photos:Array.isArray(r.photos)?r.photos:[], gear:Array.isArray(r.gear)?r.gear.filter(g=>typeof g==="string"&&g.trim()).map(g=>g.trim()):[], stats:(r.stats&&typeof r.stats==="object")?r.stats:{}, peaks:normPeaks(r.peaks), trip_id:r.trip_id||null, notes:r.notes||"", place:r.place||"", kind:KINDS[r.kind]?r.kind:"other"}; }
 const normPeaks = a => (Array.isArray(a)?a:[]).filter(p=>p&&typeof p.name==="string"&&p.name.trim()).map(p=>({name:p.name.trim(),elev_m:isFinite(+p.elev_m)&&p.elev_m!==null&&p.elev_m!==""?+p.elev_m:null,...(isFinite(+p.lat)&&isFinite(+p.lng)&&p.lat!=null?{lat:+p.lat,lng:+p.lng}:{})}));
+// Trips are switched off for now. The data stays in the database; set this to true to bring them back.
+const TRIPS_ON = false;
 const normTrip = t => ({id:t.id,title:t.title||"Untitled trip",notes:t.notes||""});
 async function loadEntries(){
   if(sb){
     const [a,b] = await Promise.all([sb.from("entries").select("*").order("start_date"), sb.from("trips").select("*")]);
-    if(!a.error){ entries=a.data.map(norm); trips=(b.error?[]:b.data).map(normTrip); source="live"; return; }
+    if(!a.error){ entries=a.data.map(norm); trips=(!TRIPS_ON||b.error?[]:b.data).map(normTrip); source="live"; return; }
     console.warn("Supabase unavailable, using backup", a.error);
   }
   try{ const r=await fetch("data/entries.json",{cache:"no-store"}); entries=(await r.json()).map(norm); source=sb?"backup":"file"; }
   catch{ entries=[]; source="none"; }
-  try{ const r=await fetch("data/trips.json",{cache:"no-store"}); trips=r.ok?(await r.json()).map(normTrip):[]; }catch{ trips=[]; }
+  try{ const r=TRIPS_ON&&await fetch("data/trips.json",{cache:"no-store"}); trips=r&&r.ok?(await r.json()).map(normTrip):[]; }catch{ trips=[]; }
 }
 async function refresh(keepView){ await loadEntries(); if(selected && !entries.find(e=>e.id===selected)){ selected=null; setUrl(null); } if(selTrip && !tripById(selTrip)){ selTrip=null; setUrl(null); } renderAll(); if(!keepView && !selected) fitAll(false); }
 
@@ -564,7 +566,7 @@ function openForm(e){
           <button class="del label" type="button" id="rClear">Clear</button></div>
         <textarea id="fRoute" hidden style="min-height:90px;font-family:var(--mono);font-size:12px" placeholder="One “lat, lng” per line, in order"></textarea>
         <span class="hint">Export a GPX from Strava (activity page on the website → ⋯ → Export GPX), Gaia GPS, AllTrails or a Garmin.</span></div>
-      <div class="f w"><label class="label" for="fTrip">Trip</label>
+      <div class="f w"${TRIPS_ON?"":" hidden"}><label class="label" for="fTrip">Trip</label>
         <select id="fTrip"><option value="">None</option>${trips.slice().sort((a,b)=>String((tripRange(b.id)[0])||"").localeCompare(String(tripRange(a.id)[0]||""))).map(t=>`<option value="${esc(t.id)}"${t.id===e.trip_id?" selected":""}>${esc(t.title)}</option>`).join("")}<option value="__new">New trip…</option></select>
         <input id="fTripNew" hidden placeholder="Name of the new trip"></div>
       <div class="f w"><span class="label">Summits</span>
@@ -610,7 +612,7 @@ function openForm(e){
     let tripId=q("#fTrip").value;
     if(tripId==="__new"){ const tt=q("#fTripNew").value.trim(); if(!tt){ err.textContent="Name the new trip."; return; }
       const r=await sb.from("trips").insert({title:tt}).select().single(); if(r.error){ err.textContent="Couldn't create the trip: "+r.error.message; return; } tripId=r.data.id; }
-    row.trip_id=tripId||null;
+    if(TRIPS_ON) row.trip_id=tripId||null; // when trips are off, leave existing assignments alone
     q("#saveBtn").disabled=true;
     const res = isNew ? await sb.from("entries").insert(row).select().single() : await sb.from("entries").update(row).eq("id",e.id).select().single();
     if(res.error){ err.textContent="Couldn't save: "+res.error.message; q("#saveBtn").disabled=false; return; }

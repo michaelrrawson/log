@@ -29,7 +29,7 @@ Edit an entry, then under Route choose:
 - **Totals**: click the numbers at the top of the list. Breaks down by activity, year and gear (miles on each pair of shoes or bike).
 - **Gear**: one item per line when editing an entry.
 - **Share links**: every entry has its own address (`?e=<id>`); "Copy link" on an entry copies it.
-- **Trips**: group entries into chapters. Pick one in the list to see it on the map with a day-by-day page; share it with `?t=<id>`. Assign entries to a trip (or start a new one) from the entry's Edit form.
+- **Trips** (switched off for now; set `TRIPS_ON = true` in app.js to bring them back, the 7 trips are still saved): group entries into chapters. Pick one in the list to see it on the map with a day-by-day page; share it with `?t=<id>`. Assign entries to a trip (or start a new one) from the entry's Edit form.
 - **Summits**: peaks bagged on each entry. "Find on route" in the Edit form lists named summits the route passes close to. Totals keep the full peak list.
 - **On this day**: the totals page shows what you did on this date (or this week) in earlier years.
 - **Replay route**: the 3D flyover.
