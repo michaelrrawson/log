@@ -26,10 +26,25 @@ button{cursor:pointer;background:none;border:0;padding:0}
 /* ledger */
 .ledger{position:sticky;top:0;height:100vh;height:100dvh;display:flex;flex-direction:column;background:var(--bg);border-right:1px solid var(--line);padding:20px 16px 0 max(16px,env(safe-area-inset-left));z-index:5;min-width:0}
 .mark{font-weight:700;font-size:22px;letter-spacing:-.03em;margin:0;line-height:1.2}
-.tally{display:flex;gap:18px;margin:14px 0 0;padding:12px 0;border-block:1px solid var(--line);color:var(--muted);flex-wrap:wrap}
-.tally div{display:grid;gap:1px}
+.tally{display:flex;gap:18px;margin:14px 0 0;padding:12px 0;border-block:1px solid var(--line);color:var(--muted);flex-wrap:wrap;width:100%;text-align:left;align-items:end}
+.tally>span{display:grid;gap:1px}
+.tally .more{margin-left:auto;font-size:10px;opacity:0;transition:opacity .15s}
+.tally:hover .more,.tally:focus-visible .more{opacity:1}
+@media (hover:none){.tally .more{opacity:1}}
 .tally b{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--fg);font-variant-numeric:tabular-nums}
 .add{background:var(--fg);color:var(--bg);padding:9px 16px;margin-top:14px;width:100%}
+.search{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);margin-top:10px}
+.search input{flex:1;min-width:0;border:0;background:none;padding:9px 0;outline:none;-webkit-appearance:none;appearance:none;border-radius:0}
+.search input::placeholder{color:var(--muted)}
+.search input::-webkit-search-cancel-button{filter:grayscale(1);opacity:.6}
+.search button{color:var(--muted);padding:9px 0}
+.search button[aria-expanded="true"],.search button:hover{color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.chip{font-size:12px;padding:3px 8px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip:hover{color:var(--fg);border-color:var(--fg)}
+.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.chip.clear{border-color:transparent;text-decoration:underline;text-underline-offset:3px}
+.chipsep{flex-basis:100%;height:0}
 .list{flex:1;overflow-y:auto;margin:6px -16px 0;padding:0 16px 16px}
 .year{color:var(--muted);padding:16px 0 4px}
 .entry{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;width:100%;text-align:left;padding:10px 0;border-bottom:1px solid var(--line);align-items:baseline}
@@ -42,6 +57,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .emptylist{color:var(--muted);padding:16px 0;margin:0}
 .foot{display:flex;justify-content:space-between;gap:10px;padding:12px 0 calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);color:var(--muted);flex-wrap:wrap}
 .foot .link{color:var(--muted);letter-spacing:inherit;text-transform:inherit;font-size:inherit}
+.strava{display:flex;gap:8px;flex-basis:100%;order:3}
+.strava button[disabled]{opacity:.6;cursor:default}
 
 /* map */
 .main{min-width:0}
@@ -51,9 +68,16 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .mapctl button{height:32px;padding:0 10px;border-bottom:1px solid var(--line);color:var(--fg);font-size:10px}
 .mapctl button:last-child{border-bottom:0}
 .mapctl button:hover{background:var(--tile)}
-.mapacts{position:absolute;z-index:3;left:50%;bottom:28px;transform:translateX(-50%);display:flex;gap:8px}
+.mapctl button.on{background:var(--fg);color:var(--bg)}
+.mapacts{position:absolute;z-index:3;left:50%;bottom:76px;transform:translateX(-50%);display:flex;gap:8px}
 .mapacts button{background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:9px 14px;white-space:nowrap}
 .mapacts .solidbtn{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.timeline{position:absolute;z-index:3;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));width:min(620px,calc(100% - 24px));display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--line);padding:7px 12px}
+.timeline input{flex:1;min-width:40px;accent-color:var(--fg)}
+.timeline button{width:22px;font-size:12px;line-height:1}
+.timeline .mono{font-size:12px;white-space:nowrap}
+.timeline .tlcount{color:var(--muted);min-width:2.5ch;text-align:right}
+.mapboxgl-ctrl-bottom-left,.mapboxgl-ctrl-bottom-right{bottom:58px}
 .maperr{position:absolute;inset:auto 12px 12px 12px;z-index:4;background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:12px 14px;max-width:520px}
 .mapboxgl-ctrl-group{border-radius:0!important;box-shadow:none!important;border:1px solid var(--line)}
 .mapboxgl-ctrl-scale{font-family:var(--mono);border-radius:0}
@@ -72,7 +96,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .pickbar button{text-decoration:underline;text-underline-offset:3px;color:inherit;letter-spacing:inherit;text-transform:inherit;font-size:inherit}
 
 /* replay */
-.replay .mapctl,.replay .mapacts,.replay .mapboxgl-ctrl-bottom-right,.replay .mapboxgl-ctrl-top-right{display:none}
+.replay .mapboxgl-ctrl-bottom-left,.replay .mapboxgl-ctrl-bottom-right{bottom:0}
+.replay .mapctl,.replay .mapacts,.replay .timeline,.replay .mapboxgl-ctrl-bottom-right,.replay .mapboxgl-ctrl-top-right{display:none}
 .replaybar{position:absolute;z-index:7;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:var(--bg);border:1px solid var(--line);padding:8px 14px;width:min(600px,calc(100% - 24px))}
 .replaybar input{flex:1;min-width:60px;accent-color:var(--fg)}
 .replaybar .mono{font-size:12px;white-space:nowrap;color:var(--muted)}
@@ -94,10 +119,10 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .ttl{margin:10px 0 2px;font-size:28px;font-weight:600;letter-spacing:-.025em;line-height:1.15;text-wrap:balance;overflow-wrap:anywhere}
 .place{color:var(--muted);font-size:15px;margin:0 0 24px}
 .specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));border-top:1px solid var(--line);margin:0 0 36px}
-.specs>div{padding:12px 16px 12px 0;border-bottom:1px solid var(--line);display:grid;gap:3px;min-width:0}
+.specs>div{padding:12px 16px 12px 0;border-bottom:1px solid var(--line);display:grid;gap:3px;min-width:0;align-content:start}
 .specs dt{color:var(--muted)}
 .specs dd{margin:0;font-family:var(--mono);font-size:13px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
-.specs a,.specs button{text-decoration:underline;text-underline-offset:3px;font-family:var(--ui);font-size:13px}
+.specs a,.specs button{text-align:left;text-decoration:underline;text-underline-offset:3px;font-family:var(--ui);font-size:13px}
 .block{display:grid;gap:12px;margin-bottom:40px}
 .bhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:8px}
 .notes{white-space:pre-wrap;max-width:68ch;font-size:15px;line-height:1.65;margin:0}
@@ -121,6 +146,16 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .btn[disabled]{opacity:.4;cursor:default}
 .del{color:var(--danger);text-decoration:underline;text-underline-offset:3px}
 .intro{max-width:52ch;color:var(--muted)}
+.tothint{color:var(--muted);font-size:12px;margin:-24px 0 32px}
+.tablewrap{overflow-x:auto}
+.tot{width:100%;max-width:720px;border-collapse:collapse;font-size:13px}
+.tot th,.tot td{padding:8px 16px 8px 0;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:400;white-space:nowrap}
+.tot thead th{color:var(--muted);font-family:var(--ui)}
+.tot th:first-child{text-align:left;font-family:var(--ui);font-weight:500;white-space:normal}
+.tot thead th:first-child{font-weight:500}
+.gear{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.gear button{border:1px solid var(--line);padding:4px 10px;font-size:13px}
+.gear button:hover{border-color:var(--fg)}
 .intro .ttl{color:var(--fg)}
 .sp{flex:1}
 
@@ -158,5 +193,9 @@ button{cursor:pointer;background:none;border:0;padding:0}
   .fields{grid-template-columns:1fr}
   .replaybar{gap:10px;padding:8px 10px}
   .viewpanel .hint{display:none}
+  .timeline{gap:8px;padding:6px 10px}
+  .timeline #tlRead{font-size:11px}
+  .mapacts{bottom:64px}
+  .tothint{margin-top:-16px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

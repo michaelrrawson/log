@@ -4,7 +4,7 @@ const CFG = window.LOG_CONFIG || {};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const KINDS = {temple:"Temple & sacred site",backpacking:"Backpacking",highline:"Highline & rope swing",hike:"Hike",trailrun:"Trail run",bike:"Bike ride",mtb:"Mountain bike",climb:"Climbing & canyoneering",water:"Water & river",city:"City & culture",show:"Show & performance",road:"Road trip",other:"Other"};
+const KINDS = {temple:"Temple & sacred site",backpacking:"Backpacking",highline:"Highline & rope swing",hike:"Hike",trailrun:"Trail run",bike:"Bike ride",mtb:"Mountain bike",ski:"Backcountry ski",climb:"Climbing & canyoneering",water:"Water & river",city:"City & culture",show:"Show & performance",road:"Road trip",other:"Other"};
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const STYLES = { satellite:"mapbox://styles/mapbox/satellite-streets-v12", terrain:"mapbox://styles/mapbox/outdoors-v12" };
 
@@ -58,7 +58,7 @@ function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; cle
 const sb = (CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase) ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
 let entries=[], selected=null, canEdit=false, source="";
 const photoUrl = p => sb ? sb.storage.from("photos").getPublicUrl(p.path).data.publicUrl : (p.url||"");
-function norm(r){ return {...r, lat:+r.lat, lng:+r.lng, route:validRoute(r.route), photos:Array.isArray(r.photos)?r.photos:[], notes:r.notes||"", place:r.place||"", kind:KINDS[r.kind]?r.kind:"other"}; }
+function norm(r){ return {...r, lat:+r.lat, lng:+r.lng, route:validRoute(r.route), photos:Array.isArray(r.photos)?r.photos:[], gear:Array.isArray(r.gear)?r.gear.filter(g=>typeof g==="string"&&g.trim()).map(g=>g.trim()):[], stats:(r.stats&&typeof r.stats==="object")?r.stats:{}, notes:r.notes||"", place:r.place||"", kind:KINDS[r.kind]?r.kind:"other"}; }
 async function loadEntries(){
   if(sb){
     const {data,error} = await sb.from("entries").select("*").order("start_date");
@@ -68,7 +68,7 @@ async function loadEntries(){
   try{ const r=await fetch("data/entries.json",{cache:"no-store"}); entries=(await r.json()).map(norm); source=sb?"backup":"file"; }
   catch{ entries=[]; source="none"; }
 }
-async function refresh(keepView){ await loadEntries(); if(selected && !entries.find(e=>e.id===selected)) selected=null; renderAll(); if(!keepView && !selected) fitAll(false); }
+async function refresh(keepView){ await loadEntries(); if(selected && !entries.find(e=>e.id===selected)){ selected=null; setUrl(null); } setupTimelineRange(); renderAll(); if(!keepView && !selected) fitAll(false); }
 
 /* ---------- auth: one editor login by email link ---------- */
 async function initAuth(){
@@ -79,7 +79,7 @@ async function initAuth(){
     if(session){ const {data} = await sb.rpc("is_admin"); canEdit = data===true; }
     $("#authBtn").textContent = session ? "Sign out" : "Editor sign in";
     $("#who").textContent = session ? (canEdit ? "Editing" : "Signed in, view only") : "";
-    $("#addBtn").hidden=!canEdit; renderAll();
+    $("#addBtn").hidden=!canEdit; renderAll(); stravaStatus();
   };
   sb.auth.onAuthStateChange((_ev,session)=>upd(session));
   const {data:{session}} = await sb.auth.getSession(); upd(session);
@@ -88,6 +88,28 @@ async function initAuth(){
     if(session){ await sb.auth.signOut(); toast("Signed out"); return; }
     openSignIn();
   };
+}
+/* ---------- Strava auto-sync (editors only): the server pulls new activities every 3 hours ---------- */
+async function stravaStatus(){
+  const box=$("#strava"); if(!box) return;
+  if(!canEdit||!sb){ box.hidden=true; return; }
+  const {data}=await sb.rpc("strava_status"); box.hidden=false;
+  if(!data||!data.connected){ box.innerHTML=`<span>Strava not connected</span><button type="button" class="link" id="stConnect">Connect</button>`; }
+  else{ const ago=data.last_sync?Math.round((Date.now()-Date.parse(data.last_sync))/6e4):null;
+    const when=ago===null?"not yet":ago<2?"just now":ago<90?`${ago} min ago`:ago<2880?`${Math.round(ago/60)} h ago`:`${Math.round(ago/1440)} d ago`;
+    box.innerHTML=`<span title="${esc(data.last_result||"")}">Strava synced ${when}</span><button type="button" class="link" id="stSync">Sync now</button>`; }
+  const c=$("#stConnect"); if(c) c.onclick=async()=>{ const {data:n,error}=await sb.rpc("strava_connect_nonce"); if(error){ toast("Couldn't start: "+error.message); return; } location.href=`${CFG.supabaseUrl}/functions/v1/strava-connect?start=1&state=${n}`; };
+  const y=$("#stSync"); if(y) y.onclick=async()=>{ y.textContent="Syncing…"; y.disabled=true;
+    const {data:r,error}=await sb.functions.invoke("strava-sync",{body:{}});
+    if(error||!r||!r.ok) toast("Sync didn't finish: "+((r&&r.error)||(error&&error.message)||"unknown error"));
+    else toast(r.added?`Added ${r.added} from Strava`:"Nothing new on Strava");
+    if(r&&r.added) await refresh(true); stravaStatus(); };
+}
+function stravaReturn(){
+  const u=new URL(location.href), s=u.searchParams.get("strava"); if(!s) return;
+  const msg={connected:"Strava connected. Importing new activities…","missing-keys":"Strava keys aren't set on the server yet.",expired:"That Strava link expired. Try Connect again.",denied:"Strava access wasn't granted.","need-private":"Allow access to all activities (including private) so the sync can read them.",failed:"Strava didn't accept the connection. Try again."}[s]||"Strava: "+s;
+  toast(msg); u.searchParams.delete("strava"); history.replaceState(null,"",u);
+  if(s==="connected") setTimeout(()=>refresh(true),20000);
 }
 function openSignIn(){
   const root=document.createElement("div");
@@ -130,14 +152,45 @@ function setupStyle(){
   map.addLayer({id:"routes-line",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":["case",["get","on"],3,1.6],"line-opacity":["case",["get","on"],1,0.6]}});
   map.addLayer({id:"replay-glow",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":12,"line-opacity":0.3,"line-blur":5}});
   map.addLayer({id:"replay-line",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":4}});
+  map.addSource("heat",{type:"geojson",data:heatGeo()});
+  map.addLayer({id:"heat",type:"heatmap",source:"heat",layout:{visibility:heatOn?"visible":"none"},paint:{
+    "heatmap-weight":0.1,
+    "heatmap-intensity":["interpolate",["linear"],["zoom"],1,4,5,2,8,0.9,12,0.9,15,1.4],
+    "heatmap-radius":["interpolate",["linear"],["zoom"],1,8,5,8,8,7,12,10,15,18],
+    "heatmap-opacity":0.9,
+    "heatmap-color":["interpolate",["linear"],["heatmap-density"],0,"rgba(57,255,20,0)",0.15,"rgba(57,255,20,0.35)",0.45,"rgba(120,255,60,0.75)",0.75,"rgba(210,255,120,0.95)",1,"rgb(255,255,235)"]}},"routes-glow");
   map.addSource("trail",{type:"geojson",lineMetrics:true,data:{type:"Feature",properties:{},geometry:{type:"LineString",coordinates:[[0,0],[0,0]]}}});
   map.addLayer({id:"trail-glow",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#39ff14","line-width":12,"line-opacity":0.3,"line-blur":5,"line-trim-offset":[0,1]}});
   map.addLayer({id:"trail-line",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#39ff14","line-width":4,"line-trim-offset":[0,1]}});
+  applyVisibility();
 }
 function routesGeo(){
   return {type:"FeatureCollection",features:entries.filter(e=>e.route.length>1).map(e=>({type:"Feature",properties:{id:e.id,on:e.id===selected},geometry:{type:"LineString",coordinates:e.route.map(ll)}}))};
 }
-function drawRoutes(){ if(map && map.getSource("routes")) map.getSource("routes").setData(routesGeo()); }
+function heatGeo(){ // points every ~120 m along each route (or the pin, if no route)
+  const f=[];
+  for(const e of entries){
+    const r=e.route;
+    if(r.length<2){ f.push({type:"Feature",properties:{id:e.id},geometry:{type:"Point",coordinates:[e.lng,e.lat]}}); continue; }
+    let carry=0;
+    for(let i=1;i<r.length;i++){ const d=hav(r[i-1],r[i]); let t=120-carry;
+      while(t<=d){ const k=t/d; f.push({type:"Feature",properties:{id:e.id},geometry:{type:"Point",coordinates:[r[i-1][1]+(r[i][1]-r[i-1][1])*k,r[i-1][0]+(r[i][0]-r[i-1][0])*k]}}); t+=120; }
+      carry=(carry+d)%120; }
+  }
+  return {type:"FeatureCollection",features:f};
+}
+function drawRoutes(){ if(map && map.getSource("routes")){ map.getSource("routes").setData(routesGeo()); map.getSource("heat").setData(heatGeo()); applyVisibility(); } }
+let heatOn=false;
+function applyVisibility(){
+  const ids=new Set(shown().map(e=>e.id)), list=["literal",[...ids]];
+  for(const [id,m] of Object.entries(markers)) m.getElement().style.display = (ids.has(id) && !heatOn) ? "" : "none";
+  if(!map || !map.getLayer("routes-line")) return;
+  const f=["in",["get","id"],list];
+  ["routes-line","routes-glow","heat"].forEach(l=>map.setFilter(l,f));
+  map.setLayoutProperty("heat","visibility",heatOn?"visible":"none");
+  map.setLayoutProperty("routes-line","visibility",heatOn?"none":"visible");
+  map.setLayoutProperty("routes-glow","visibility",heatOn?"none":"visible");
+}
 function drawMarkers(){
   if(!map) return;
   for(const m of Object.values(markers)) m.remove(); markers={};
@@ -149,6 +202,7 @@ function drawMarkers(){
     el.appendChild(b);
     markers[e.id]=new mapboxgl.Marker({element:el,anchor:"bottom"}).setLngLat([e.lng,e.lat]).addTo(map);
   }
+  applyVisibility();
 }
 function boundsOf(pts){ const b=new mapboxgl.LngLatBounds(); pts.forEach(p=>b.extend(ll(p))); return b; }
 function flyTo(e){
@@ -159,9 +213,10 @@ function flyTo(e){
     map.flyTo({...cam,bearing:-20,pitch:58,duration:dur,curve:1.6,essential:true});
   } else map.flyTo({center:[e.lng,e.lat],zoom:14.2,pitch:62,bearing:-25,duration:dur,curve:1.6,essential:true});
 }
-function fitAll(animate=true){
-  if(!map || !entries.length) return;
-  const pts=entries.flatMap(e=>[[e.lat,e.lng],...e.route]);
+function fitAll(animate=true){ fitTo(shown().length?shown():entries,animate); }
+function fitTo(list,animate=true){
+  if(!map || !list.length) return;
+  const pts=list.flatMap(e=>[[e.lat,e.lng],...e.route]);
   if(pts.length===1) map.flyTo({center:ll(pts[0]),zoom:6,pitch:0,bearing:0,duration:animate&&!reduce?2500:0});
   else map.fitBounds(boundsOf(pts),{padding:80,pitch:0,bearing:0,maxZoom:8,duration:animate&&!reduce?2500:0});
 }
@@ -169,22 +224,108 @@ function setupMapButtons(){
   $("#mapctl").addEventListener("click",ev=>{ const b=ev.target.closest("button"); if(!b||!map) return;
     if(b.dataset.z==="all") fitAll();
     if(b.dataset.z==="globe") map.flyTo({center:map.getCenter(),zoom:1.6,pitch:0,bearing:0,duration:reduce?0:2500,essential:true});
+    if(b.dataset.z==="heat"){ heatOn=!heatOn; b.setAttribute("aria-pressed",String(heatOn)); b.classList.toggle("on",heatOn); applyVisibility();
+      return; }
     if(b.dataset.z==="style"){ styleKey = styleKey==="satellite"?"terrain":"satellite"; b.textContent = styleKey==="satellite"?"Terrain":"Satellite"; map.setStyle(STYLES[styleKey]); map.once("style.load",()=>{ drawRoutes(); }); }
   });
 }
 
+/* ---------- search, filters and the timeline: one rule decides what's shown everywhere ---------- */
+const filt={q:"",kinds:new Set(),years:new Set(),until:null}; // until: "YYYY-MM-DD" or null for everything
+const yearOf=e=>String(e.start_date||"").slice(0,4)||"Undated";
+const hay=e=>[e.title,e.place,KINDS[e.kind],e.notes,...e.gear,yearOf(e)].join(" ").toLowerCase();
+function matchesFilters(e){
+  if(filt.kinds.size && !filt.kinds.has(e.kind)) return false;
+  if(filt.years.size && !filt.years.has(yearOf(e))) return false;
+  if(filt.q){ const h=hay(e); if(!filt.q.split(/\s+/).every(w=>h.includes(w))) return false; }
+  return true;
+}
+const isShown = e => matchesFilters(e) && (!filt.until || String(e.start_date)<=filt.until);
+const shown = () => entries.filter(isShown);
+const filtering = () => !!(filt.q||filt.kinds.size||filt.years.size);
+
+function renderFilters(){
+  const box=$("#chips"); if(!box) return;
+  const kinds=[...new Set(entries.map(e=>e.kind))].sort((a,b)=>KINDS[a].localeCompare(KINDS[b]));
+  const years=[...new Set(entries.map(yearOf))].sort().reverse();
+  const chip=(t,k,v,on)=>`<button type="button" class="chip${on?" on":""}" data-t="${t}" data-v="${esc(v)}" aria-pressed="${on}">${esc(k)}</button>`;
+  box.innerHTML = years.map(y=>chip("y",y,y,filt.years.has(y))).join("") + `<span class="chipsep"></span>` + kinds.map(k=>chip("k",KINDS[k],k,filt.kinds.has(k))).join("")
+    + (filtering()?`<button type="button" class="chip clear" data-t="clear">Clear</button>`:"");
+  $("#filterBtn").textContent = filtering() ? `Filter · ${filt.kinds.size+filt.years.size+(filt.q?1:0)}` : "Filter";
+}
+function setupFilters(){
+  let t=0;
+  $("#q").addEventListener("input",ev=>{ clearTimeout(t); t=setTimeout(()=>{ filt.q=ev.target.value.trim().toLowerCase(); afterFilter(); },120); });
+  $("#filterBtn").onclick=()=>{ const c=$("#chips"); c.hidden=!c.hidden; $("#filterBtn").setAttribute("aria-expanded",String(!c.hidden)); };
+  $("#chips").addEventListener("click",ev=>{ const b=ev.target.closest(".chip"); if(!b) return;
+    if(b.dataset.t==="clear"){ filt.kinds.clear(); filt.years.clear(); filt.q=""; $("#q").value=""; }
+    else { const set=b.dataset.t==="k"?filt.kinds:filt.years; set.has(b.dataset.v)?set.delete(b.dataset.v):set.add(b.dataset.v); }
+    afterFilter(); });
+}
+function afterFilter(){
+  renderFilters(); setupTimelineRange(); applyVisibility(); renderTally(); renderList(); if(!selected) renderSheet();
+  const vis=shown(); if(map && vis.length && filtering()) fitTo(vis);
+}
+
+/* ---------- timeline scrubber ---------- */
+let tl={days:[],playing:false,raf:0};
+const dayStr = t => new Date(t).toISOString().slice(0,10);
+function setupTimelineRange(){
+  const ds=entries.filter(matchesFilters).map(e=>Date.parse(e.start_date)).filter(isFinite);
+  const el=$("#tlRange");
+  if(ds.length<2){ $("#timeline").hidden=true; filt.until=null; return; }
+  if(!$("#chartwrap").classList.contains("replay")) $("#timeline").hidden=false;
+  const lo=Math.min(...ds), hi=Math.max(...ds); tl.lo=lo; tl.hi=hi;
+  el.min=0; el.max=Math.round((hi-lo)/864e5); el.step=1;
+  if(!filt.until) el.value=el.max; else el.value=Math.max(0,Math.min(+el.max,Math.round((Date.parse(filt.until)-lo)/864e5)));
+  tlLabel();
+}
+function tlLabel(){
+  const el=$("#tlRange"), atEnd=+el.value>=+el.max;
+  const d=parseD(dayStr(tl.lo+ +el.value*864e5));
+  $("#tlRead").textContent = atEnd ? "All time" : `Through ${d.d} ${MON[d.m-1]} ${d.y}`;
+  $("#tlCount").textContent = `${shown().length}`;
+}
+let tlUi=0;
+function tlSet(v,{quick=false}={}){
+  const el=$("#tlRange"); el.value=v;
+  filt.until = +el.value>=+el.max ? null : dayStr(tl.lo+ +el.value*864e5);
+  applyVisibility(); tlLabel();
+  const now=performance.now();
+  if(!quick || now-tlUi>180){ tlUi=now; renderTally(); renderList(); if(!selected) renderSheet(); }
+}
+function setupTimeline(){
+  const el=$("#tlRange"), btn=$("#tlPlay");
+  el.addEventListener("input",()=>{ tlStop(); tlSet(+el.value,{quick:true}); });
+  el.addEventListener("change",()=>tlSet(+el.value));
+  btn.onclick=()=>{ if(tl.playing){ tlStop(); return; }
+    if(+el.value>=+el.max) tlSet(0);
+    tl.playing=true; btn.textContent="❚❚"; btn.setAttribute("aria-label","Pause timeline");
+    const span=+el.max||1, secs=Math.min(20,Math.max(8,span/40)); let last=performance.now(), pos=+el.value;
+    const step=now=>{ if(!tl.playing) return; pos=Math.min(span,pos+(now-last)/1000*span/secs); last=now;
+      tlSet(Math.floor(pos),{quick:true}); if(pos>=span){ tlStop(); tlSet(span); return; } tl.raf=requestAnimationFrame(step); };
+    tl.raf=requestAnimationFrame(step); };
+}
+function tlStop(){ tl.playing=false; cancelAnimationFrame(tl.raf); const b=$("#tlPlay"); b.textContent="▶"; b.setAttribute("aria-label","Play timeline"); }
+
 /* ---------- ledger + sheet ---------- */
 const sorted = () => [...entries].sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
+const vert = e => +(e.stats&&e.stats.vertical_m)||0;
+const ft = m => m*3.28084;
+const entryMeters = e => routeMeters(e.route) || (+(e.stats&&e.stats.meters)||0);
 function renderTally(){
-  $("#nEntries").textContent=entries.length;
-  $("#nDays").textContent=entries.reduce((s,e)=>s+days(e.start_date,e.end_date),0);
-  $("#nMiles").textContent=Math.round(mi(entries.reduce((s,e)=>s+routeMeters(e.route),0))).toLocaleString();
+  const v=shown();
+  $("#nEntries").textContent=v.length;
+  $("#nDays").textContent=v.reduce((s,e)=>s+days(e.start_date,e.end_date),0);
+  $("#nMiles").textContent=Math.round(mi(v.reduce((s,e)=>s+entryMeters(e),0))).toLocaleString();
 }
 function renderList(){
   const list=$("#list");
   if(!entries.length){ list.innerHTML=`<p class="emptylist">${canEdit?"Nothing logged yet. Choose Add Entry to drop your first pin.":"Nothing logged yet."}</p>`; return; }
+  const vis=sorted().filter(isShown);
+  if(!vis.length){ list.innerHTML=`<p class="emptylist">Nothing matches.</p>`; return; }
   let html="", yr=null;
-  for(const e of sorted()){
+  for(const e of vis){
     const d=parseD(e.start_date), y=d?d.y:"Undated";
     if(y!==yr){ html+=`<div class="year label">${y}</div>`; yr=y; }
     html+=`<button class="entry" type="button" data-id="${esc(e.id)}" aria-current="${e.id===selected}"><span class="d">${d?`${String(d.m).padStart(2,"0")}.${String(d.d).padStart(2,"0")}`:"—"}</span><span><span class="t">${esc(e.title)}</span><span class="m">${esc(e.place||KINDS[e.kind])}</span></span></button>`;
@@ -192,15 +333,24 @@ function renderList(){
   list.innerHTML=html;
 }
 function renderAll(){
-  renderTally(); renderList(); drawMarkers(); drawRoutes(); renderSheet();
+  renderFilters(); renderTally(); renderList(); drawMarkers(); drawRoutes(); renderSheet();
   const e=entries.find(x=>x.id===selected);
   $("#readBtn").hidden=!e; $("#playBtn").hidden=!(e && e.route.length>1);
 }
 function select(id,{fly=false}={}){
   if(replay) replay.stop(false); // picking another entry ends the replay and flies there instead
   selected=id; const e=entries.find(x=>x.id===id);
-  renderAll(); if(e&&fly) flyTo(e);
+  setUrl(e); renderAll(); if(e&&fly) flyTo(e);
   const btn=document.querySelector(`.entry[data-id="${CSS.escape(id)}"]`); if(btn) btn.scrollIntoView({block:"nearest"});
+}
+/* ---------- share links: ?e=<id> opens straight to that entry ---------- */
+const linkFor = e => `${location.origin}${location.pathname}?e=${encodeURIComponent(e.id)}`;
+function setUrl(e){ try{ const u=new URL(location.href); if(e) u.searchParams.set("e",e.id); else u.searchParams.delete("e"); history.replaceState(null,"",u); document.title = e ? `${e.title} · Log` : "Log"; }catch{} }
+async function share(e,btn){
+  const url=linkFor(e);
+  if(navigator.share && matchMedia("(pointer:coarse)").matches){ try{ await navigator.share({title:e.title,text:`${e.title} · ${fmtRange(e.start_date,e.end_date)}`,url}); return; }catch(err){ if(err && err.name==="AbortError") return; } }
+  try{ await navigator.clipboard.writeText(url); btn.textContent="Link copied"; }catch{ prompt("Copy this link",url); }
+  setTimeout(()=>{ if(btn.isConnected) btn.textContent="Copy link"; },2200);
 }
 $("#list").addEventListener("click",ev=>{ const b=ev.target.closest(".entry"); if(b) select(b.dataset.id,{fly:true}); });
 $("#readBtn").onclick=()=>$("#sheet").scrollIntoView({behavior:reduce?"auto":"smooth"});
@@ -208,8 +358,8 @@ $("#playBtn").onclick=()=>{ const e=entries.find(x=>x.id===selected); if(e) star
 
 function renderSheet(){
   const box=$("#sheetIn"), e=entries.find(x=>x.id===selected);
-  if(!e){ box.innerHTML=`<div class="intro"><span class="label">Entry</span><h2 class="ttl">Pick an adventure</h2><p>Choose one from the list or click a pin. The map flies to it, and its date, notes and photos show here.${source==="backup"?" (Showing the backup copy: the live database didn't answer.)":""}</p></div>`; return; }
-  const nd=days(e.start_date,e.end_date), meters=routeMeters(e.route);
+  if(!e){ box.innerHTML=totalsHTML(); return; }
+  const nd=days(e.start_date,e.end_date), meters=routeMeters(e.route), st=e.stats||{};
   const gearth=`https://earth.google.com/web/@${e.lat},${e.lng},1500a,3000d,35y,0h,60t,0r`;
   box.innerHTML=`
     <div class="kicker label"><span>${esc(KINDS[e.kind])}</span><span>${esc(fmtRange(e.start_date,e.end_date))}</span></div>
@@ -219,9 +369,13 @@ function renderSheet(){
       <div><dt class="label">Date</dt><dd>${esc(e.start_date)}${e.end_date&&e.end_date!==e.start_date?` → ${esc(e.end_date)}`:""}</dd></div>
       <div><dt class="label">Duration</dt><dd>${nd} day${nd>1?"s":""}</dd></div>
       ${e.route.length>1?`<div><dt class="label">Route</dt><dd>${mi(meters).toFixed(1)} mi · <button type="button" id="playLink">Replay</button></dd></div>`:""}
+      ${vert(e)?`<div><dt class="label">Vertical</dt><dd>${Math.round(ft(vert(e))).toLocaleString()} ft</dd></div>`:""}
+      ${+st.moving_s?`<div><dt class="label">Moving time</dt><dd>${hm(+st.moving_s)}</dd></div>`:""}
       <div><dt class="label">Coordinates</dt><dd><span id="dec">${e.lat.toFixed(5)}, ${e.lng.toFixed(5)}</span> · <button type="button" id="copyBtn">Copy</button></dd></div>
-      <div><dt class="label">Elsewhere</dt><dd><a href="${gearth}" target="_blank" rel="noopener">Google Earth</a></dd></div>
+      <div><dt class="label">Elsewhere</dt><dd><a href="${gearth}" target="_blank" rel="noopener">Google Earth</a>${st.strava_id&&!st.missing?` · <a href="https://www.strava.com/activities/${+st.strava_id}" target="_blank" rel="noopener">Strava</a>`:""}</dd></div>
+      <div><dt class="label">Share</dt><dd><button type="button" id="shareBtn">Copy link</button></dd></div>
     </dl>
+    ${e.gear.length||canEdit?`<div class="block"><div class="bhead label"><span>Gear</span><span class="mono">${e.gear.length}</span></div>${e.gear.length?`<ul class="gear">${e.gear.map(g=>`<li><button type="button" class="gearq" data-g="${esc(g)}" title="Show every entry with this">${esc(g)}</button></li>`).join("")}</ul>`:`<p class="notes empty">No gear listed. Choose Edit to add some.</p>`}</div>`:""}
     <div class="block"><div class="bhead label"><span>Notes</span></div><p class="notes${e.notes?"":" empty"}">${e.notes?esc(e.notes):(canEdit?"No notes yet. Choose Edit to add some.":"No notes.")}</p></div>
     <div class="block"><div class="bhead label"><span>Photos</span><span class="mono">${e.photos.length}</span></div>
       ${e.photos.length||canEdit?`<div class="gallery" id="gallery">${e.photos.map((p,i)=>`<figure class="ph"><img src="${esc(photoUrl(p))}" alt="${esc(p.name||`Photo ${i+1} from ${e.title}`)}" loading="lazy">${canEdit?`<button class="x" type="button" data-del="${i}">Remove</button>`:""}</figure>`).join("")}${canEdit?`<button class="drop" id="drop" type="button"><strong>Add photos</strong><span>Click or drop images</span></button>`:""}</div>`:`<p class="notes empty">No photos.</p>`}
@@ -230,6 +384,8 @@ function renderSheet(){
   const q=s=>box.querySelector(s);
   q("#copyBtn").onclick=async()=>{ try{ await navigator.clipboard.writeText(q("#dec").textContent); q("#copyBtn").textContent="Copied"; }catch{ q("#copyBtn").textContent="Select and copy"; } };
   if(q("#playLink")) q("#playLink").onclick=()=>startReplay(e);
+  q("#shareBtn").onclick=ev=>share(e,ev.target);
+  box.querySelectorAll(".gearq").forEach(b=>b.onclick=()=>{ $("#q").value=b.dataset.g; filt.q=b.dataset.g.toLowerCase(); select(null); afterFilter(); $(".ledger").scrollIntoView({block:"nearest"}); });
   if(q("#gallery")) q("#gallery").addEventListener("click",ev=>{ const d=ev.target.closest("[data-del]"); if(d){ removePhoto(e,+d.dataset.del,d); return; } const img=ev.target.closest("img"); if(img) lightbox(img.src,img.alt); });
   const drop=q("#drop");
   if(drop){ drop.onclick=()=>q("#fileIn").click(); q("#fileIn").onchange=ev=>uploadPhotos(e,[...ev.target.files]);
@@ -242,6 +398,45 @@ function renderSheet(){
     if(a.id==="delYes"){ const {error}=await sb.from("entries").delete().eq("id",e.id); if(error){ toast("Couldn't delete: "+error.message); return; }
       if(e.photos.length) await sb.storage.from("photos").remove(e.photos.map(p=>p.path)); selected=null; toast("Deleted"); refresh(true); } });
 }
+/* ---------- totals: what the sheet shows when no entry is picked ---------- */
+const hm = s => { const h=Math.floor(s/3600), m=Math.round((s%3600)/60); return h?`${h}h ${String(m).padStart(2,"0")}m`:`${m}m`; };
+function totalsHTML(){
+  const v=shown(), all=entries.length;
+  const sum=(list,f)=>list.reduce((s,e)=>s+f(e),0);
+  const miles=l=>mi(sum(l,entryMeters)), vft=l=>ft(sum(l,vert));
+  const withV=v.filter(e=>vert(e)).length, mov=sum(v,e=>+(e.stats&&e.stats.moving_s)||0);
+  const scope = filt.until||filtering() ? `${v.length} of ${all} entries${filt.until?` through ${fmtRange(filt.until)}`:""}` : "Everything logged";
+  const note = source==="backup" ? `<p class="tothint">Showing the backup copy: the live database didn't answer.</p>` : "";
+  if(!v.length) return `<div class="intro"><span class="label">Totals</span><h2 class="ttl">Nothing matches</h2><p>Change the search or filters to see totals.</p></div>`;
+  const group=(keyf,label)=>{ const m=new Map(); v.forEach(e=>{ const k=keyf(e); (m.get(k)||m.set(k,[]).get(k)).push(e); }); return [...m.entries()].map(([k,l])=>({k,label:label(k),l})); };
+  const row=(name,l,extra="")=>`<tr><th scope="row">${name}</th><td>${l.length}</td><td>${Math.round(miles(l)).toLocaleString()}</td>${withV?`<td>${Math.round(vft(l)).toLocaleString()}</td>`:""}${extra}</tr>`;
+  const head=first=>`<thead><tr><th scope="col" class="label">${first}</th><th scope="col" class="label">Entries</th><th scope="col" class="label">Miles</th>${withV?`<th scope="col" class="label">Vert ft</th>`:""}</tr></thead>`;
+  const byKind=group(e=>e.kind,k=>esc(KINDS[k])).sort((a,b)=>miles(b.l)-miles(a.l)||b.l.length-a.l.length);
+  const byYear=group(yearOf,y=>esc(y)).sort((a,b)=>b.k.localeCompare(a.k));
+  const gearMap=new Map(); v.forEach(e=>e.gear.forEach(g=>{ (gearMap.get(g)||gearMap.set(g,[]).get(g)).push(e); }));
+  const byGear=[...gearMap.entries()].sort((a,b)=>miles(b[1])-miles(a[1])).slice(0,12);
+  const longest=[...v].sort((a,b)=>entryMeters(b)-entryMeters(a))[0];
+  const biggest=withV?[...v].sort((a,b)=>vert(b)-vert(a))[0]:null;
+  const countries=new Set(v.map(e=>(e.place.split(",").pop()||"").trim()).filter(Boolean));
+  return `<div class="kicker label"><span>Totals</span><span>${esc(scope)}</span></div>
+    <h2 class="ttl">${Math.round(miles(v)).toLocaleString()} miles${withV?`, ${Math.round(vft(v)).toLocaleString()} ft up`:""}</h2>
+    <p class="place">Pick an entry from the list or a pin to read it.</p>${note}
+    <dl class="specs">
+      <div><dt class="label">Entries</dt><dd>${v.length}</dd></div>
+      <div><dt class="label">Days out</dt><dd>${sum(v,e=>days(e.start_date,e.end_date))}</dd></div>
+      <div><dt class="label">Miles</dt><dd>${miles(v).toFixed(1)}</dd></div>
+      ${withV?`<div><dt class="label">Vertical</dt><dd>${Math.round(vft(v)).toLocaleString()} ft</dd></div>`:""}
+      ${mov?`<div><dt class="label">Moving time</dt><dd>${hm(mov)}</dd></div>`:""}
+      <div><dt class="label">States &amp; countries</dt><dd>${countries.size}</dd></div>
+      ${longest&&entryMeters(longest)?`<div><dt class="label">Longest</dt><dd><button type="button" data-open="${esc(longest.id)}">${esc(longest.title)}</button> · ${mi(entryMeters(longest)).toFixed(1)} mi</dd></div>`:""}
+      ${biggest?`<div><dt class="label">Most vertical</dt><dd><button type="button" data-open="${esc(biggest.id)}">${esc(biggest.title)}</button> · ${Math.round(ft(vert(biggest))).toLocaleString()} ft</dd></div>`:""}
+    </dl>
+    ${withV&&withV<v.length?`<p class="tothint">Vertical and moving time come from Strava and cover ${withV} of these ${v.length} entries.</p>`:""}
+    <div class="block"><div class="bhead label"><span>By activity</span></div><div class="tablewrap"><table class="tot">${head("Activity")}<tbody>${byKind.map(g=>row(g.label,g.l)).join("")}</tbody></table></div></div>
+    <div class="block"><div class="bhead label"><span>By year</span></div><div class="tablewrap"><table class="tot">${head("Year")}<tbody>${byYear.map(g=>row(g.label,g.l)).join("")}</tbody></table></div></div>
+    ${byGear.length?`<div class="block"><div class="bhead label"><span>Gear</span><span class="mono">miles on each</span></div><div class="tablewrap"><table class="tot">${head("Item")}<tbody>${byGear.map(([g,l])=>row(esc(g),l)).join("")}</tbody></table></div></div>`:""}`;
+}
+$("#sheetIn").addEventListener("click",ev=>{ const b=ev.target.closest("[data-open]"); if(b) select(b.dataset.open,{fly:true}); });
 function setStatus(m,err){ const s=$("#upStatus"); if(s){ s.textContent=m; s.classList.toggle("err",!!err); } }
 async function shrink(file){
   try{ const bmp=await createImageBitmap(file); const sc=Math.min(1,2400/Math.max(bmp.width,bmp.height));
@@ -301,6 +496,7 @@ function openForm(e){
           <button class="del label" type="button" id="rClear">Clear</button></div>
         <textarea id="fRoute" hidden style="min-height:90px;font-family:var(--mono);font-size:12px" placeholder="One “lat, lng” per line, in order"></textarea>
         <span class="hint">Export a GPX from Strava (activity page on the website → ⋯ → Export GPX), Gaia GPS, AllTrails or a Garmin.</span></div>
+      <div class="f w"><label class="label" for="fGear">Gear</label><textarea id="fGear" style="min-height:80px" placeholder="One item per line">${esc((e.gear||[]).join("\n"))}</textarea><span class="hint">One item per line. Totals add up the miles on each.</span></div>
       <div class="f w"><label class="label" for="fNotes">Notes</label><textarea id="fNotes">${esc(e.notes||"")}</textarea></div>
     </div>
     <p class="formerr" id="fErr"></p>
@@ -325,7 +521,7 @@ function openForm(e){
     const title=q("#fTitle").value.trim(), c=parseCoords(q("#fCoords").value), start=q("#fStart").value, end=q("#fEnd").value;
     if(!title){ err.textContent="Add a title."; return; } if(!start){ err.textContent="Add the date it started."; return; }
     if(!c){ err.textContent="Coordinates should look like 37.2690, -112.9480."; return; } if(end&&end<start){ err.textContent="The end date is before the start date."; return; }
-    const row={title,kind:q("#fKind").value,place:q("#fPlace").value.trim(),start_date:start,end_date:end||null,lat:+c[0].toFixed(6),lng:+c[1].toFixed(6),route:rpts,notes:q("#fNotes").value};
+    const row={title,kind:q("#fKind").value,place:q("#fPlace").value.trim(),start_date:start,end_date:end||null,lat:+c[0].toFixed(6),lng:+c[1].toFixed(6),route:rpts,notes:q("#fNotes").value,gear:[...new Set(q("#fGear").value.split("\n").map(x=>x.trim()).filter(Boolean))]};
     q("#saveBtn").disabled=true;
     const res = isNew ? await sb.from("entries").insert(row).select().single() : await sb.from("entries").update(row).eq("id",e.id).select().single();
     if(res.error){ err.textContent="Couldn't save: "+res.error.message; q("#saveBtn").disabled=false; return; }
@@ -388,7 +584,7 @@ function startReplay(e){
   const zoom=Math.max(12.6,Math.min(15.2,15.6-Math.log2(Math.max(1,total/1500))*0.55)), pitch=reduce?0:54;
   const baseDur=Math.min(75,Math.max(22,14+miles*1.6))*1000;
 
-  const wrap=$("#chartwrap"); wrap.classList.add("replay"); wrap.scrollIntoView({block:"nearest"});
+  tlStop(); const wrap=$("#chartwrap"); wrap.classList.add("replay"); wrap.scrollIntoView({block:"nearest"});
   Object.values(markers).forEach(mk=>mk.getElement().style.visibility="hidden");
   map.setPaintProperty("routes-line","line-opacity",["case",["get","on"],0.3,0.2]); map.setPaintProperty("routes-glow","line-opacity",0);
   map.getSource("trail").setData({type:"Feature",properties:{},geometry:{type:"LineString",coordinates:route.map(ll)}});
@@ -468,10 +664,15 @@ function startReplay(e){
 
 /* ---------- start ---------- */
 $("#addBtn").onclick=()=>openForm(null);
-initMap(); setupMapButtons();
+$("#tally").onclick=()=>{ select(null); $("#sheet").scrollIntoView({behavior:reduce?"auto":"smooth"}); };
+initMap(); setupMapButtons(); setupFilters(); setupTimeline(); stravaReturn();
 loadEntries().then(()=>{
-  renderAll();
-  if(map){ if(map.loaded()) { drawRoutes(); setTimeout(()=>fitAll(true),400); } else map.once("load",()=>{ drawRoutes(); setTimeout(()=>fitAll(true),400); }); }
+  const want=new URL(location.href).searchParams.get("e"), linked=want&&entries.find(e=>e.id===want);
+  if(linked) selected=linked.id; else if(want) setUrl(null);
+  setupTimelineRange(); renderAll();
+  const go=()=>{ drawRoutes(); setTimeout(()=>linked?flyTo(linked):fitAll(true),400); };
+  if(map){ if(map.loaded()) go(); else map.once("load",go); }
+  if(linked){ document.title=`${linked.title} · Log`; const b=document.querySelector(`.entry[data-id="${CSS.escape(linked.id)}"]`); if(b) b.scrollIntoView({block:"center"}); window.scrollTo(0,0); }
 });
 initAuth();
 })();

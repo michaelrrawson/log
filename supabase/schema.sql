@@ -61,3 +61,14 @@ create policy "admins delete photos" on storage.objects for delete using (bucket
 
 -- 4. Editor emails (lowercase)
 -- insert into public.admins (email) values ('you@example.com') on conflict do nothing;
+
+-- 5. Added Nov 2026: gear lists, Strava stats and the Strava connection
+alter table public.entries add column if not exists gear jsonb not null default '[]'::jsonb;   -- ["Speedgoat 5", ...]
+alter table public.entries add column if not exists stats jsonb not null default '{}'::jsonb;  -- {strava_id, meters, vertical_m, moving_s, sport}
+create table if not exists public.strava_auth (
+  id int primary key default 1 check (id = 1), athlete_id bigint, access_token text, refresh_token text,
+  expires_at bigint, connect_nonce text, nonce_at timestamptz, last_sync timestamptz, last_result text);
+alter table public.strava_auth enable row level security;  -- no policies: server only
+insert into public.strava_auth (id) values (1) on conflict do nothing;
+-- strava_connect_nonce() (editors only) and strava_status() (signed in) live in the database;
+-- a pg_cron job named 'strava-sync' calls the strava-sync function at :23 every 3 hours.
