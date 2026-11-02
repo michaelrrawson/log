@@ -54,6 +54,13 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .entry:hover .t{text-decoration:underline;text-underline-offset:3px}
 .entry[aria-current="true"] .t{text-decoration:underline;text-decoration-color:var(--pin);text-decoration-thickness:2px;text-underline-offset:4px}
 .entry[aria-current="true"] .d{color:var(--fg)}
+.triphead{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:10px;width:100%;text-align:left;padding:12px 0 8px;border-bottom:1px solid var(--line);align-items:baseline}
+.triphead .label{color:var(--muted);font-size:10px;grid-row:1/3}
+.triphead .t{font-weight:600}
+.triphead .m{grid-column:2;color:var(--muted);font-size:12px}
+.triphead:hover .t{text-decoration:underline;text-underline-offset:3px}
+.triphead[aria-current="true"] .t{text-decoration:underline;text-decoration-color:var(--pin);text-decoration-thickness:2px;text-underline-offset:4px}
+.entry.intrip{padding-left:12px;grid-template-columns:32px minmax(0,1fr);border-left:1px solid var(--line)}
 .emptylist{color:var(--muted);padding:16px 0;margin:0}
 .foot{display:flex;justify-content:space-between;gap:10px;padding:12px 0 calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);color:var(--muted);flex-wrap:wrap}
 .foot .link{color:var(--muted);letter-spacing:inherit;text-transform:inherit;font-size:inherit}
@@ -138,6 +145,17 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .btn[disabled]{opacity:.4;cursor:default}
 .del{color:var(--danger);text-decoration:underline;text-underline-offset:3px}
 .intro{max-width:52ch;color:var(--muted)}
+.kickerlink{text-decoration:underline;text-underline-offset:3px;color:var(--fg);letter-spacing:inherit;text-transform:inherit;font-size:inherit;font-weight:inherit;text-align:left}
+.peaklist,.daylist,.otdlist{list-style:none;margin:0;padding:0;max-width:720px}
+.peaklist li{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid var(--line)}
+.peaklist .mono{font-size:13px;color:var(--muted)}
+.daylist button,.otdlist button{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr);column-gap:16px;width:100%;text-align:left;padding:9px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.daylist .d,.otdlist .d{font-size:12px;color:var(--muted)}
+.daylist .t,.otdlist .t{font-weight:500}
+.daylist .m{grid-column:2;color:var(--muted);font-size:13px}
+.daylist button:hover .t,.otdlist button:hover .t{text-decoration:underline;text-underline-offset:3px}
+.otd{margin-top:-12px}
+.tot th button,.tot td button{text-decoration:underline;text-underline-offset:3px;text-align:left;font:inherit}
 .tothint{color:var(--muted);font-size:12px;margin:-24px 0 32px}
 .tablewrap{overflow-x:auto}
 .tot{width:100%;max-width:720px;border-collapse:collapse;font-size:13px}
@@ -186,5 +204,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
   .replaybar{gap:10px;padding:8px 10px}
   .viewpanel .hint{display:none}
   .tothint{margin-top:-16px}
+  .daylist button,.otdlist button{grid-template-columns:minmax(0,1fr)}
+  .daylist .m{grid-column:1}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

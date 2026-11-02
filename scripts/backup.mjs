@@ -16,6 +16,8 @@ const rows = await res.json();
 const clean = rows.map(({ created_at, updated_at, ...r }) => r);
 writeFileSync("data/entries.json", JSON.stringify(clean, null, 2) + "\n");
 console.log(`Saved ${clean.length} entries.`);
+const tr = await fetch(`${url}/rest/v1/trips?select=id,title,notes&order=id.asc`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+if (tr.ok) { const t = await tr.json(); writeFileSync("data/trips.json", JSON.stringify(t, null, 2) + "\n"); console.log(`Saved ${t.length} trips.`); }
 
 // GitHub turns off scheduled jobs in repos with no commits for 60 days,
 // so write a heartbeat on the 1st of each month.

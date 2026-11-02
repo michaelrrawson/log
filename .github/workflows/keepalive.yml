@@ -22,6 +22,6 @@ jobs:
         run: |
           git config user.name "log-backup-bot"
           git config user.email "log-backup-bot@users.noreply.github.com"
-          git add data/entries.json data/heartbeat.txt
+          git add data/entries.json data/trips.json data/heartbeat.txt
           git diff --cached --quiet || git commit -m "Daily backup of entries"
           git push

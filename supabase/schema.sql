@@ -72,3 +72,10 @@ alter table public.strava_auth enable row level security;  -- no policies: serve
 insert into public.strava_auth (id) values (1) on conflict do nothing;
 -- strava_connect_nonce() (editors only) and strava_status() (signed in) live in the database;
 -- a pg_cron job named 'strava-sync' calls the strava-sync function at :23 every 3 hours.
+
+-- 6. Added Nov 2026: trips and summits
+create table if not exists public.trips (id text primary key default gen_random_uuid()::text, title text not null,
+  notes text not null default '', created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+alter table public.trips enable row level security;  -- public read, admins write (same policies as entries)
+alter table public.entries add column if not exists trip_id text references public.trips(id) on delete set null;
+alter table public.entries add column if not exists peaks jsonb not null default '[]'::jsonb;  -- [{name, elev_m, lat, lng}]

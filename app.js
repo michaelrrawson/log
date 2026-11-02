@@ -56,19 +56,22 @@ function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; cle
 
 /* ---------- data: Supabase, with the JSON backup as fallback ---------- */
 const sb = (CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase) ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
-let entries=[], selected=null, canEdit=false, source="";
+let entries=[], trips=[], selected=null, selTrip=null, canEdit=false, source="";
 const photoUrl = p => sb ? sb.storage.from("photos").getPublicUrl(p.path).data.publicUrl : (p.url||"");
-function norm(r){ return {...r, lat:+r.lat, lng:+r.lng, route:validRoute(r.route), photos:Array.isArray(r.photos)?r.photos:[], gear:Array.isArray(r.gear)?r.gear.filter(g=>typeof g==="string"&&g.trim()).map(g=>g.trim()):[], stats:(r.stats&&typeof r.stats==="object")?r.stats:{}, notes:r.notes||"", place:r.place||"", kind:KINDS[r.kind]?r.kind:"other"}; }
+function norm(r){ return {...r, lat:+r.lat, lng:+r.lng, route:validRoute(r.route), photos:Array.isArray(r.photos)?r.photos:[], gear:Array.isArray(r.gear)?r.gear.filter(g=>typeof g==="string"&&g.trim()).map(g=>g.trim()):[], stats:(r.stats&&typeof r.stats==="object")?r.stats:{}, peaks:normPeaks(r.peaks), trip_id:r.trip_id||null, notes:r.notes||"", place:r.place||"", kind:KINDS[r.kind]?r.kind:"other"}; }
+const normPeaks = a => (Array.isArray(a)?a:[]).filter(p=>p&&typeof p.name==="string"&&p.name.trim()).map(p=>({name:p.name.trim(),elev_m:isFinite(+p.elev_m)&&p.elev_m!==null&&p.elev_m!==""?+p.elev_m:null,...(isFinite(+p.lat)&&isFinite(+p.lng)&&p.lat!=null?{lat:+p.lat,lng:+p.lng}:{})}));
+const normTrip = t => ({id:t.id,title:t.title||"Untitled trip",notes:t.notes||""});
 async function loadEntries(){
   if(sb){
-    const {data,error} = await sb.from("entries").select("*").order("start_date");
-    if(!error){ entries=data.map(norm); source="live"; return; }
-    console.warn("Supabase unavailable, using backup", error);
+    const [a,b] = await Promise.all([sb.from("entries").select("*").order("start_date"), sb.from("trips").select("*")]);
+    if(!a.error){ entries=a.data.map(norm); trips=(b.error?[]:b.data).map(normTrip); source="live"; return; }
+    console.warn("Supabase unavailable, using backup", a.error);
   }
   try{ const r=await fetch("data/entries.json",{cache:"no-store"}); entries=(await r.json()).map(norm); source=sb?"backup":"file"; }
   catch{ entries=[]; source="none"; }
+  try{ const r=await fetch("data/trips.json",{cache:"no-store"}); trips=r.ok?(await r.json()).map(normTrip):[]; }catch{ trips=[]; }
 }
-async function refresh(keepView){ await loadEntries(); if(selected && !entries.find(e=>e.id===selected)){ selected=null; setUrl(null); } renderAll(); if(!keepView && !selected) fitAll(false); }
+async function refresh(keepView){ await loadEntries(); if(selected && !entries.find(e=>e.id===selected)){ selected=null; setUrl(null); } if(selTrip && !tripById(selTrip)){ selTrip=null; setUrl(null); } renderAll(); if(!keepView && !selected) fitAll(false); }
 
 /* ---------- auth: one editor login by email link ---------- */
 async function initAuth(){
@@ -158,7 +161,7 @@ function setupStyle(){
   applyVisibility();
 }
 function routesGeo(){
-  return {type:"FeatureCollection",features:entries.filter(e=>e.route.length>1).map(e=>({type:"Feature",properties:{id:e.id,on:e.id===selected},geometry:{type:"LineString",coordinates:e.route.map(ll)}}))};
+  return {type:"FeatureCollection",features:entries.filter(e=>e.route.length>1).map(e=>({type:"Feature",properties:{id:e.id,on:isOn(e)},geometry:{type:"LineString",coordinates:e.route.map(ll)}}))};
 }
 function drawRoutes(){ if(map && map.getSource("routes")){ map.getSource("routes").setData(routesGeo()); applyVisibility(); } }
 function applyVisibility(){
@@ -173,7 +176,7 @@ function drawMarkers(){
   for(const m of Object.values(markers)) m.remove(); markers={};
   for(const e of entries){
     const el=document.createElement("div"); el.className="pinwrap";
-    const b=document.createElement("button"); b.type="button"; b.className="pin"+(e.id===selected?" on":""); b.setAttribute("aria-label",e.title);
+    const b=document.createElement("button"); b.type="button"; b.className="pin"+(isOn(e)?" on":""); b.setAttribute("aria-label",e.title);
     b.innerHTML=`<span class="tip">${esc(e.title)}<span class="mono">${esc(fmtRange(e.start_date,e.end_date))}</span></span>`;
     b.addEventListener("click",ev=>{ ev.stopPropagation(); select(e.id,{fly:true}); });
     el.appendChild(b);
@@ -181,6 +184,7 @@ function drawMarkers(){
   }
   applyVisibility();
 }
+const isOn = e => e.id===selected || (!!selTrip && e.trip_id===selTrip);
 function boundsOf(pts){ const b=new mapboxgl.LngLatBounds(); pts.forEach(p=>b.extend(ll(p))); return b; }
 function flyTo(e){
   if(!map) return;
@@ -208,7 +212,7 @@ function setupMapButtons(){
 /* ---------- search and filters: one rule decides what's shown everywhere ---------- */
 const filt={q:"",kinds:new Set(),years:new Set()};
 const yearOf=e=>String(e.start_date||"").slice(0,4)||"Undated";
-const hay=e=>[e.title,e.place,KINDS[e.kind],e.notes,...e.gear,yearOf(e)].join(" ").toLowerCase();
+const hay=e=>[e.title,e.place,KINDS[e.kind],e.notes,...e.gear,...e.peaks.map(p=>p.name),(tripById(e.trip_id)||{}).title,yearOf(e)].join(" ").toLowerCase();
 function matchesFilters(e){
   if(filt.kinds.size && !filt.kinds.has(e.kind)) return false;
   if(filt.years.size && !filt.years.has(yearOf(e))) return false;
@@ -258,31 +262,48 @@ function renderList(){
   if(!entries.length){ list.innerHTML=`<p class="emptylist">${canEdit?"Nothing logged yet. Choose Add Entry to drop your first pin.":"Nothing logged yet."}</p>`; return; }
   const vis=sorted().filter(isShown);
   if(!vis.length){ list.innerHTML=`<p class="emptylist">Nothing matches.</p>`; return; }
-  let html="", yr=null;
+  let html="", yr=null, cur=null;
   for(const e of vis){
     const d=parseD(e.start_date), y=d?d.y:"Undated";
-    if(y!==yr){ html+=`<div class="year label">${y}</div>`; yr=y; }
-    html+=`<button class="entry" type="button" data-id="${esc(e.id)}" aria-current="${e.id===selected}"><span class="d">${d?`${String(d.m).padStart(2,"0")}.${String(d.d).padStart(2,"0")}`:"—"}</span><span><span class="t">${esc(e.title)}</span><span class="m">${esc(e.place||KINDS[e.kind])}</span></span></button>`;
+    if(y!==yr){ html+=`<div class="year label">${y}</div>`; yr=y; cur=null; }
+    const t=tripById(e.trip_id);
+    if(t && t.id!==cur){ const tm=tripEntries(t.id), r=tripRange(t.id);
+      html+=`<button class="triphead" type="button" data-trip="${esc(t.id)}" aria-current="${t.id===selTrip}"><span class="label">Trip</span><span class="t">${esc(t.title)}</span><span class="m mono">${esc(fmtRange(r[0],r[1]))} · ${tm.length}</span></button>`; }
+    cur = t ? t.id : null;
+    html+=`<button class="entry${t?" intrip":""}" type="button" data-id="${esc(e.id)}" aria-current="${e.id===selected}"><span class="d">${d?`${String(d.m).padStart(2,"0")}.${String(d.d).padStart(2,"0")}`:"—"}</span><span><span class="t">${esc(e.title)}</span><span class="m">${esc(e.place||KINDS[e.kind])}</span></span></button>`;
   }
   list.innerHTML=html;
 }
 function renderAll(){
   renderFilters(); renderTally(); renderList(); drawMarkers(); drawRoutes(); renderSheet();
   const e=entries.find(x=>x.id===selected);
-  $("#readBtn").hidden=!e; $("#playBtn").hidden=!(e && e.route.length>1);
+  $("#readBtn").hidden=!(e||selTrip); $("#readBtn").textContent = e ? "Read entry ↓" : "Read trip ↓"; $("#playBtn").hidden=!(e && e.route.length>1);
 }
 function select(id,{fly=false}={}){
   if(replay) replay.stop(false); // picking another entry ends the replay and flies there instead
-  selected=id; const e=entries.find(x=>x.id===id);
-  setUrl(e); renderAll(); if(e&&fly) flyTo(e);
+  selected=id; selTrip=null; const e=entries.find(x=>x.id===id);
+  setUrl(e?{e:e.id}:null,e&&e.title); renderAll(); if(e&&fly) flyTo(e);
   const btn=document.querySelector(`.entry[data-id="${CSS.escape(id)}"]`); if(btn) btn.scrollIntoView({block:"nearest"});
 }
-/* ---------- share links: ?e=<id> opens straight to that entry ---------- */
-const linkFor = e => `${location.origin}${location.pathname}?e=${encodeURIComponent(e.id)}`;
-function setUrl(e){ try{ const u=new URL(location.href); if(e) u.searchParams.set("e",e.id); else u.searchParams.delete("e"); history.replaceState(null,"",u); document.title = e ? `${e.title} · Log` : "Log"; }catch{} }
-async function share(e,btn){
-  const url=linkFor(e);
-  if(navigator.share && matchMedia("(pointer:coarse)").matches){ try{ await navigator.share({title:e.title,text:`${e.title} · ${fmtRange(e.start_date,e.end_date)}`,url}); return; }catch(err){ if(err && err.name==="AbortError") return; } }
+/* ---------- trips: entries grouped into chapters ---------- */
+const tripById = id => id ? trips.find(t=>t.id===id) : null;
+const tripEntries = id => sorted().filter(e=>e.trip_id===id);
+function tripRange(id){ const l=tripEntries(id); if(!l.length) return [null,null]; const end=l.map(e=>e.end_date||e.start_date).sort().at(-1); return [l[0].start_date,end]; }
+function selectTrip(id,{fly=true}={}){
+  if(replay) replay.stop(false);
+  const t=tripById(id); if(!t) return;
+  selected=null; selTrip=id; setUrl({t:id},t.title); renderAll();
+  if(fly) fitTo(tripEntries(id));
+  const b=document.querySelector(`.triphead[data-trip="${CSS.escape(id)}"]`); if(b) b.scrollIntoView({block:"nearest"});
+}
+$("#list").addEventListener("click",ev=>{ const b=ev.target.closest(".triphead"); if(b) selectTrip(b.dataset.trip); });
+
+/* ---------- share links: ?e=<entry> or ?t=<trip> opens straight to it ---------- */
+const linkFor = (key,id) => `${location.origin}${location.pathname}?${key}=${encodeURIComponent(id)}`;
+function setUrl(p,title){ try{ const u=new URL(location.href); u.searchParams.delete("e"); u.searchParams.delete("t"); if(p) for(const [k,v] of Object.entries(p)) u.searchParams.set(k,v); history.replaceState(null,"",u); document.title = title ? `${title} · Log` : "Log"; }catch{} }
+async function share(key,id,title,sub,btn){
+  const url=linkFor(key,id);
+  if(navigator.share && matchMedia("(pointer:coarse)").matches){ try{ await navigator.share({title,text:`${title} · ${sub}`,url}); return; }catch(err){ if(err && err.name==="AbortError") return; } }
   try{ await navigator.clipboard.writeText(url); btn.textContent="Link copied"; }catch{ prompt("Copy this link",url); }
   setTimeout(()=>{ if(btn.isConnected) btn.textContent="Copy link"; },2200);
 }
@@ -292,11 +313,13 @@ $("#playBtn").onclick=()=>{ const e=entries.find(x=>x.id===selected); if(e) star
 
 function renderSheet(){
   const box=$("#sheetIn"), e=entries.find(x=>x.id===selected);
+  if(!e && selTrip && tripById(selTrip)){ renderTripSheet(tripById(selTrip)); return; }
   if(!e){ box.innerHTML=totalsHTML(); return; }
+  const trip=tripById(e.trip_id);
   const nd=days(e.start_date,e.end_date), meters=routeMeters(e.route), st=e.stats||{};
   const gearth=`https://earth.google.com/web/@${e.lat},${e.lng},1500a,3000d,35y,0h,60t,0r`;
   box.innerHTML=`
-    <div class="kicker label"><span>${esc(KINDS[e.kind])}</span><span>${esc(fmtRange(e.start_date,e.end_date))}</span></div>
+    <div class="kicker label"><span>${esc(KINDS[e.kind])}</span><span>${esc(fmtRange(e.start_date,e.end_date))}</span>${trip?`<button type="button" class="kickerlink" data-opentrip="${esc(trip.id)}">Trip: ${esc(trip.title)} →</button>`:""}</div>
     <h2 class="ttl">${esc(e.title)}</h2>
     <p class="place">${esc(e.place)}</p>
     <dl class="specs">
@@ -309,6 +332,7 @@ function renderSheet(){
       <div><dt class="label">Elsewhere</dt><dd><a href="${gearth}" target="_blank" rel="noopener">Google Earth</a>${st.strava_id&&!st.missing?` · <a href="https://www.strava.com/activities/${+st.strava_id}" target="_blank" rel="noopener">Strava</a>`:""}</dd></div>
       <div><dt class="label">Share</dt><dd><button type="button" id="shareBtn">Copy link</button></dd></div>
     </dl>
+    ${e.peaks.length?`<div class="block"><div class="bhead label"><span>Summits</span><span class="mono">${e.peaks.length}</span></div><ul class="peaklist">${e.peaks.map(p=>`<li><span>${esc(p.name)}</span><span class="mono">${elevTxt(p)}</span></li>`).join("")}</ul></div>`:""}
     ${e.gear.length||canEdit?`<div class="block"><div class="bhead label"><span>Gear</span><span class="mono">${e.gear.length}</span></div>${e.gear.length?`<ul class="gear">${e.gear.map(g=>`<li><button type="button" class="gearq" data-g="${esc(g)}" title="Show every entry with this">${esc(g)}</button></li>`).join("")}</ul>`:`<p class="notes empty">No gear listed. Choose Edit to add some.</p>`}</div>`:""}
     <div class="block"><div class="bhead label"><span>Notes</span></div><p class="notes${e.notes?"":" empty"}">${e.notes?esc(e.notes):(canEdit?"No notes yet. Choose Edit to add some.":"No notes.")}</p></div>
     <div class="block"><div class="bhead label"><span>Photos</span><span class="mono">${e.photos.length}</span></div>
@@ -318,7 +342,7 @@ function renderSheet(){
   const q=s=>box.querySelector(s);
   q("#copyBtn").onclick=async()=>{ try{ await navigator.clipboard.writeText(q("#dec").textContent); q("#copyBtn").textContent="Copied"; }catch{ q("#copyBtn").textContent="Select and copy"; } };
   if(q("#playLink")) q("#playLink").onclick=()=>startReplay(e);
-  q("#shareBtn").onclick=ev=>share(e,ev.target);
+  q("#shareBtn").onclick=ev=>share("e",e.id,e.title,fmtRange(e.start_date,e.end_date),ev.target);
   box.querySelectorAll(".gearq").forEach(b=>b.onclick=()=>{ $("#q").value=b.dataset.g; filt.q=b.dataset.g.toLowerCase(); select(null); afterFilter(); $(".ledger").scrollIntoView({block:"nearest"}); });
   if(q("#gallery")) q("#gallery").addEventListener("click",ev=>{ const d=ev.target.closest("[data-del]"); if(d){ removePhoto(e,+d.dataset.del,d); return; } const img=ev.target.closest("img"); if(img) lightbox(img.src,img.alt); });
   const drop=q("#drop");
@@ -330,10 +354,96 @@ function renderSheet(){
     if(a.id==="delBtn"){ dw.innerHTML=`<span>Delete for good?</span> <button class="del" type="button" id="delYes">Delete</button> <button class="link" type="button" id="delNo">Keep</button>`; return; }
     if(a.id==="delNo"){ dw.innerHTML=`<button class="del label" id="delBtn" type="button">Delete entry</button>`; return; }
     if(a.id==="delYes"){ const {error}=await sb.from("entries").delete().eq("id",e.id); if(error){ toast("Couldn't delete: "+error.message); return; }
-      if(e.photos.length) await sb.storage.from("photos").remove(e.photos.map(p=>p.path)); selected=null; toast("Deleted"); refresh(true); } });
+      if(e.photos.length) await sb.storage.from("photos").remove(e.photos.map(p=>p.path)); selected=null; setUrl(null); toast("Deleted"); refresh(true); } });
 }
+function renderTripSheet(t){
+  const box=$("#sheetIn"), l=tripEntries(t.id), [a,b]=tripRange(t.id);
+  const miles=mi(l.reduce((s,e)=>s+entryMeters(e),0)), v=l.reduce((s,e)=>s+vert(e),0);
+  const places=[...new Set(l.map(e=>placeTail(e)).filter(Boolean))];
+  const peaks=l.flatMap(e=>e.peaks);
+  box.innerHTML=`
+    <div class="kicker label"><span>Trip</span><span>${esc(fmtRange(a,b))}</span></div>
+    <h2 class="ttl">${esc(t.title)}</h2>
+    <p class="place">${esc(places.join(" · "))}</p>
+    <dl class="specs">
+      <div><dt class="label">Days</dt><dd>${a?days(a,b):0}</dd></div>
+      <div><dt class="label">Entries</dt><dd>${l.length}</dd></div>
+      <div><dt class="label">Miles</dt><dd>${miles.toFixed(1)}</dd></div>
+      ${v?`<div><dt class="label">Vertical</dt><dd>${Math.round(ft(v)).toLocaleString()} ft</dd></div>`:""}
+      ${peaks.length?`<div><dt class="label">Summits</dt><dd>${peaks.length}</dd></div>`:""}
+      <div><dt class="label">Share</dt><dd><button type="button" id="shareBtn">Copy link</button></dd></div>
+    </dl>
+    ${t.notes||canEdit?`<div class="block"><div class="bhead label"><span>Notes</span></div><p class="notes${t.notes?"":" empty"}">${t.notes?esc(t.notes):"No notes yet. Choose Edit trip to add some."}</p></div>`:""}
+    <div class="block"><div class="bhead label"><span>Day by day</span><span class="mono">${l.length}</span></div>
+      <ol class="daylist">${l.map(e=>`<li><button type="button" data-open="${esc(e.id)}"><span class="mono d">${esc(fmtRange(e.start_date,e.end_date))}</span><span class="t">${esc(e.title)}</span><span class="m">${esc(KINDS[e.kind])}${entryMeters(e)?` · ${mi(entryMeters(e)).toFixed(1)} mi`:""}</span></button></li>`).join("")}</ol></div>
+    ${peaks.length?`<div class="block"><div class="bhead label"><span>Summits</span><span class="mono">${peaks.length}</span></div><ul class="peaklist">${peaks.map(p=>`<li><span>${esc(p.name)}</span><span class="mono">${elevTxt(p)}</span></li>`).join("")}</ul></div>`:""}
+    ${canEdit?`<div class="acts"><button class="btn solid label" id="editTrip" type="button">Edit trip</button><span class="sp"></span><span id="delWrap"><button class="del label" id="delBtn" type="button">Delete trip</button></span></div>`:""}`;
+  const q=s=>box.querySelector(s);
+  q("#shareBtn").onclick=ev=>share("t",t.id,t.title,fmtRange(a,b),ev.target);
+  if(q("#editTrip")) q("#editTrip").onclick=()=>openTripForm(t);
+  const dw=q("#delWrap"); if(dw) dw.addEventListener("click",async ev=>{ const x=ev.target.closest("button"); if(!x) return;
+    if(x.id==="delBtn"){ dw.innerHTML=`<span>Delete the trip? Its entries stay.</span> <button class="del" type="button" id="delYes">Delete</button> <button class="link" type="button" id="delNo">Keep</button>`; return; }
+    if(x.id==="delNo"){ dw.innerHTML=`<button class="del label" id="delBtn" type="button">Delete trip</button>`; return; }
+    if(x.id==="delYes"){ const {error}=await sb.from("trips").delete().eq("id",t.id); if(error){ toast("Couldn't delete: "+error.message); return; } selTrip=null; setUrl(null); toast("Trip deleted"); refresh(true); } });
+}
+function openTripForm(t){
+  const root=document.createElement("div");
+  root.innerHTML=`<div class="scrim"></div><form class="side" novalidate role="dialog" aria-modal="true" aria-label="Edit trip">
+    <div class="shead"><span class="label">Edit trip</span><button class="xclose" type="button" aria-label="Close">×</button></div>
+    <div class="fields">
+      <div class="f w"><label class="label" for="tTitle">Title</label><input id="tTitle" value="${esc(t.title)}"></div>
+      <div class="f w"><label class="label" for="tNotes">Notes</label><textarea id="tNotes">${esc(t.notes)}</textarea></div>
+      <p class="f w hint">To add or remove days, edit an entry and change its Trip.</p>
+    </div>
+    <p class="formerr" id="tErr"></p>
+    <div class="acts"><button class="link" type="button" id="tCancel">Cancel</button><span class="sp"></span><button class="btn solid label" type="submit" id="tSave">Save</button></div></form>`;
+  document.body.appendChild(root);
+  const q=s=>root.querySelector(s), close=()=>{ root.remove(); document.removeEventListener("keydown",k); }, k=ev=>{ if(ev.key==="Escape") close(); };
+  document.addEventListener("keydown",k); q("#tCancel").onclick=close; q(".xclose").onclick=close; q(".scrim").onclick=close;
+  setTimeout(()=>q("#tTitle").focus(),40);
+  q("form").onsubmit=async ev=>{ ev.preventDefault(); const title=q("#tTitle").value.trim(); if(!title){ q("#tErr").textContent="Add a title."; return; }
+    q("#tSave").disabled=true; const {error}=await sb.from("trips").update({title,notes:q("#tNotes").value}).eq("id",t.id);
+    if(error){ q("#tErr").textContent="Couldn't save: "+error.message; q("#tSave").disabled=false; return; }
+    close(); toast("Saved"); await refresh(true); selectTrip(t.id,{fly:false}); };
+}
+
+/* ---------- peaks ---------- */
+const elevTxt = p => p.elev_m ? `${Math.round(ft(p.elev_m)).toLocaleString()} ft` : "";
+const peakKey = p => (p.lat!=null ? `${p.lat.toFixed(3)},${p.lng.toFixed(3)}` : p.name.toLowerCase());
+function peakTally(list){ // unique summits with every visit
+  const m=new Map();
+  for(const e of list) for(const p of e.peaks){ const k=peakKey(p); if(!m.has(k)) m.set(k,{...p,visits:[]}); m.get(k).visits.push(e); }
+  return [...m.values()].sort((a,b)=>(b.elev_m||0)-(a.elev_m||0)||a.name.localeCompare(b.name));
+}
+// lines like "Lone Peak, 11,076 ft" or "Mt. Rokko 931 m" -> {name, elev_m}
+function parsePeakLine(line){
+  const m=line.match(/^(.*?)(\s*[,·–—-]\s*|\s+)(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(ft|feet|'|m|meters|metres)?\s*$/i);
+  // a bare number after a space with no unit is part of the name ("Peak 6233")
+  if(!m || !m[1].trim() || (!m[2].trim() && !m[4])) return {name:line.trim(),elev_m:null};
+  const n=+m[3].replace(/,/g,""), unit=(m[4]||"ft").toLowerCase();
+  return {name:m[1].trim(),elev_m:Math.round(unit.startsWith("m")?n:n/3.28084)};
+}
+const peakLine = p => p.elev_m ? `${p.name}, ${Math.round(ft(p.elev_m)).toLocaleString()} ft` : p.name;
+// summits the route passes within 120 m of, from Mapbox's map data
+async function findPeaks(route){
+  if(route.length<2 || !CFG.mapboxToken) return [];
+  const samples=[route[0]]; let acc=0;
+  for(let i=1;i<route.length;i++){ acc+=hav(route[i-1],route[i]); if(acc>=1200){ samples.push(route[i]); acc=0; } }
+  samples.push(route.at(-1));
+  const cand=new Map();
+  for(let i=0;i<samples.length;i+=8){
+    const res=await Promise.all(samples.slice(i,i+8).map(([lat,lng])=>fetch(`https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/${lng},${lat}.json?radius=900&limit=50&layers=natural_label&access_token=${CFG.mapboxToken}`).then(r=>r.ok?r.json():{features:[]}).catch(()=>({features:[]}))));
+    for(const r of res) for(const f of r.features||[]){ const p=f.properties||{}; if(!["mountain","volcano"].includes(p.maki)) continue; const name=p.name_en||p.name; if(!name) continue;
+      const [lng,lat]=f.geometry.coordinates; cand.set(`${lat.toFixed(4)},${lng.toFixed(4)}`,{name,elev_m:p.elevation_m??null,lat:+lat.toFixed(5),lng:+lng.toFixed(5)}); }
+  }
+  return [...cand.values()].filter(c=>Math.min(...route.map(p=>hav(p,[c.lat,c.lng])))<=120);
+}
+
 /* ---------- totals: what the sheet shows when no entry is picked ---------- */
 const US_STATES=new Set("Alabama Alaska Arizona Arkansas California Colorado Connecticut Delaware Florida Georgia Hawaii Idaho Illinois Indiana Iowa Kansas Kentucky Louisiana Maine Maryland Massachusetts Michigan Minnesota Mississippi Missouri Montana Nebraska Nevada New_Hampshire New_Jersey New_Mexico New_York North_Carolina North_Dakota Ohio Oklahoma Oregon Pennsylvania Rhode_Island South_Carolina South_Dakota Tennessee Texas Utah Vermont Virginia Washington West_Virginia Wisconsin Wyoming".split(" ").map(x=>x.replace(/_/g," ")));
+const CHINA_REGIONS=new Set("Anhui Beijing Chongqing Fujian Gansu Guangdong Guangxi Guizhou Hainan Hebei Heilongjiang Henan Hubei Hunan Inner_Mongolia Jiangsu Jiangxi Jilin Liaoning Ningxia Qinghai Shaanxi Shandong Shanghai Shanxi Sichuan Tianjin Tibet Xinjiang Yunnan Zhejiang".split(" ").map(x=>x.replace(/_/g," ")));
+const placeTail = e => { const t=(e.place.split(",").pop()||"").trim(); return CHINA_REGIONS.has(t)?"China":/^Hong Kong/.test(t)?"Hong Kong":t; };
+const countryOf = e => { const t=placeTail(e); return US_STATES.has(t)?"United States":t; };
 const hm = s => { const h=Math.floor(s/3600), m=Math.round((s%3600)/60); return h?`${h}h ${String(m).padStart(2,"0")}m`:`${m}m`; };
 function totalsHTML(){
   const v=shown(), all=entries.length;
@@ -354,12 +464,14 @@ function totalsHTML(){
   const longRide=longestOf(["bike","mtb"]), longRun=longestOf(["trailrun"]);
   const spec=(label,e)=>e?`<div><dt class="label">${label}</dt><dd><button type="button" data-open="${esc(e.id)}">${esc(e.title)}</button> · ${mi(entryMeters(e)).toFixed(1)} mi</dd></div>`:"";
   const biggest=withV?[...v].sort((a,b)=>vert(b)-vert(a))[0]:null;
-  const tails=v.map(e=>(e.place.split(",").pop()||"").trim()).filter(Boolean);
-  const states=new Set(tails.filter(t=>US_STATES.has(t)));
-  const countries=new Set(tails.map(t=>US_STATES.has(t)?"United States":t));
+  const states=new Set(v.map(placeTail).filter(t=>US_STATES.has(t)));
+  const countries=new Set(v.map(countryOf).filter(Boolean));
+  const peaks=peakTally(v);
+  const tripRows=trips.map(t=>({t,l:v.filter(e=>e.trip_id===t.id)})).filter(x=>x.l.length).sort((a,b)=>String(b.l[0].start_date).localeCompare(String(a.l[0].start_date)));
   return `<div class="kicker label"><span>Totals</span><span>${esc(scope)}</span></div>
     <h2 class="ttl">${Math.round(miles(v)).toLocaleString()} miles${withV?`, ${Math.round(vft(v)).toLocaleString()} ft up`:""}</h2>
     <p class="place">Pick an entry from the list or a pin to read it.</p>${note}
+    ${onThisDayHTML()}
     <dl class="specs">
       <div><dt class="label">Entries</dt><dd>${v.length}</dd></div>
       <div><dt class="label">Days out</dt><dd>${sum(v,e=>days(e.start_date,e.end_date))}</dd></div>
@@ -368,16 +480,31 @@ function totalsHTML(){
       ${mov?`<div><dt class="label">Moving time</dt><dd>${hm(mov)}</dd></div>`:""}
       <div><dt class="label">States</dt><dd>${states.size}</dd></div>
       <div><dt class="label">Countries</dt><dd>${countries.size}</dd></div>
+      ${peaks.length?`<div><dt class="label">Summits</dt><dd>${peaks.length}</dd></div>`:""}
       ${spec("Longest ride",longRide)}
       ${spec("Longest trail run",longRun)}
       ${biggest?`<div><dt class="label">Most vertical</dt><dd><button type="button" data-open="${esc(biggest.id)}">${esc(biggest.title)}</button> · ${Math.round(ft(vert(biggest))).toLocaleString()} ft</dd></div>`:""}
     </dl>
     ${withV&&withV<v.length?`<p class="tothint">Vertical and moving time come from Strava and cover ${withV} of these ${v.length} entries.</p>`:""}
+    ${tripRows.length?`<div class="block"><div class="bhead label"><span>Trips</span><span class="mono">${tripRows.length}</span></div><div class="tablewrap"><table class="tot"><thead><tr><th scope="col" class="label">Trip</th><th scope="col" class="label">Dates</th><th scope="col" class="label">Days</th><th scope="col" class="label">Miles</th></tr></thead><tbody>${tripRows.map(({t,l})=>{ const [a,b]=tripRange(t.id); return `<tr><th scope="row"><button type="button" data-opentrip="${esc(t.id)}">${esc(t.title)}</button></th><td>${esc(fmtRange(a,b))}</td><td>${days(a,b)}</td><td>${Math.round(miles(l)).toLocaleString()}</td></tr>`; }).join("")}</tbody></table></div></div>`:""}
+    ${peaks.length?`<div class="block"><div class="bhead label"><span>Summits</span><span class="mono">${peaks.length} peaks</span></div><div class="tablewrap"><table class="tot"><thead><tr><th scope="col" class="label">Peak</th><th scope="col" class="label">Elevation</th><th scope="col" class="label">Times</th><th scope="col" class="label">Last</th></tr></thead><tbody>${peaks.map(p=>{ const last=p.visits.at(-1); return `<tr><th scope="row">${esc(p.name)}</th><td>${elevTxt(p)||"—"}</td><td>${p.visits.length}</td><td><button type="button" data-open="${esc(last.id)}">${esc(fmtRange(last.start_date))}</button></td></tr>`; }).join("")}</tbody></table></div></div>`:""}
     <div class="block"><div class="bhead label"><span>By activity</span></div><div class="tablewrap"><table class="tot">${head("Activity")}<tbody>${byKind.map(g=>row(g.label,g.l)).join("")}</tbody></table></div></div>
     <div class="block"><div class="bhead label"><span>By year</span></div><div class="tablewrap"><table class="tot">${head("Year")}<tbody>${byYear.map(g=>row(g.label,g.l)).join("")}</tbody></table></div></div>
     ${byGear.length?`<div class="block"><div class="bhead label"><span>Gear</span><span class="mono">miles on each</span></div><div class="tablewrap"><table class="tot">${head("Item")}<tbody>${byGear.map(([g,l])=>row(esc(g),l)).join("")}</tbody></table></div></div>`:""}`;
 }
-$("#sheetIn").addEventListener("click",ev=>{ const b=ev.target.closest("[data-open]"); if(b) select(b.dataset.open,{fly:true}); });
+// On this day: the same date in earlier years, or failing that, the same week
+function onThisDayHTML(){
+  const now=new Date(), y=now.getFullYear(), md=d=>d.m*100+d.d;
+  const today=md({m:now.getMonth()+1,d:now.getDate()});
+  const diff=d=>{ const a=Date.UTC(2001,d.m-1,d.d), b=Date.UTC(2001,now.getMonth(),now.getDate()); let x=Math.round((a-b)/864e5); if(x>182) x-=365; if(x<-182) x+=365; return x; };
+  const past=entries.map(e=>({e,d:parseD(e.start_date)})).filter(x=>x.d && x.d.y<y);
+  let hits=past.filter(x=>md(x.d)===today), label="On this day";
+  if(!hits.length){ hits=past.filter(x=>Math.abs(diff(x.d))<=3); label="This week, other years"; }
+  if(!hits.length) return "";
+  hits.sort((a,b)=>b.d.y-a.d.y||md(a.d)-md(b.d));
+  return `<div class="block otd"><div class="bhead label"><span>${label}</span></div><ul class="otdlist">${hits.map(({e,d})=>{ const ago=y-d.y; return `<li><button type="button" data-open="${esc(e.id)}"><span class="mono d">${ago} yr${ago>1?"s":""} ago · ${d.d} ${MON[d.m-1]} ${d.y}</span><span class="t">${esc(e.title)}</span></button></li>`; }).join("")}</ul></div>`;
+}
+$("#sheetIn").addEventListener("click",ev=>{ const t=ev.target.closest("[data-opentrip]"); if(t){ selectTrip(t.dataset.opentrip); return; } const b=ev.target.closest("[data-open]"); if(b) select(b.dataset.open,{fly:true}); });
 function setStatus(m,err){ const s=$("#upStatus"); if(s){ s.textContent=m; s.classList.toggle("err",!!err); } }
 async function shrink(file){
   try{ const bmp=await createImageBitmap(file); const sc=Math.min(1,2400/Math.max(bmp.width,bmp.height));
@@ -437,6 +564,13 @@ function openForm(e){
           <button class="del label" type="button" id="rClear">Clear</button></div>
         <textarea id="fRoute" hidden style="min-height:90px;font-family:var(--mono);font-size:12px" placeholder="One “lat, lng” per line, in order"></textarea>
         <span class="hint">Export a GPX from Strava (activity page on the website → ⋯ → Export GPX), Gaia GPS, AllTrails or a Garmin.</span></div>
+      <div class="f w"><label class="label" for="fTrip">Trip</label>
+        <select id="fTrip"><option value="">None</option>${trips.slice().sort((a,b)=>String((tripRange(b.id)[0])||"").localeCompare(String(tripRange(a.id)[0]||""))).map(t=>`<option value="${esc(t.id)}"${t.id===e.trip_id?" selected":""}>${esc(t.title)}</option>`).join("")}<option value="__new">New trip…</option></select>
+        <input id="fTripNew" hidden placeholder="Name of the new trip"></div>
+      <div class="f w"><span class="label">Summits</span>
+        <div class="routebar"><span class="mono" id="pSum"></span><span class="sp"></span><button class="link label" type="button" id="pFind">Find on route</button></div>
+        <textarea id="fPeaks" style="min-height:70px" placeholder="One per line: Lone Peak, 11,076 ft">${esc((e.peaks||[]).map(peakLine).join("\n"))}</textarea>
+        <span class="hint">“Find on route” lists named summits the route passes within about 400 ft of.</span></div>
       <div class="f w"><label class="label" for="fGear">Gear</label><textarea id="fGear" style="min-height:80px" placeholder="One item per line">${esc((e.gear||[]).join("\n"))}</textarea><span class="hint">One item per line. Totals add up the miles on each.</span></div>
       <div class="f w"><label class="label" for="fNotes">Notes</label><textarea id="fNotes">${esc(e.notes||"")}</textarea></div>
     </div>
@@ -457,12 +591,26 @@ function openForm(e){
   q("#rGpx").onchange=async ev=>{ const f=ev.target.files[0]; if(!f) return; try{ const pts=parseGPX(await f.text()); if(pts.length<2) throw 0; setRoute(pts); q("#fErr").textContent=""; }catch{ q("#fErr").textContent="Couldn't read a track from that file. Make sure it's a .gpx export."; } ev.target.value=""; };
   q("#rDraw").onclick=()=>drawOnMap(root,rpts,setRoute);
   q("#pickBtn").onclick=()=>pickOnMap(root,p=>{ q("#fCoords").value=`${p[0].toFixed(5)}, ${p[1].toFixed(5)}`; });
+  q("#fTrip").onchange=()=>{ const n=q("#fTrip").value==="__new"; q("#fTripNew").hidden=!n; if(n) q("#fTripNew").focus(); };
+  let knownPeaks=[...(e.peaks||[])]; // keeps map positions for peaks found on the route
+  q("#pFind").onclick=async()=>{ const b=q("#pFind"); if(rpts.length<2){ q("#pSum").textContent="Add a route first"; return; }
+    b.disabled=true; q("#pSum").textContent="Looking…";
+    const found=await findPeaks(rpts); b.disabled=false;
+    const have=new Set(q("#fPeaks").value.split("\n").map(x=>parsePeakLine(x).name.toLowerCase()).filter(Boolean));
+    const add=found.filter(p=>!have.has(p.name.toLowerCase())); knownPeaks.push(...found);
+    if(add.length) q("#fPeaks").value=[q("#fPeaks").value.trim(),...add.map(peakLine)].filter(Boolean).join("\n");
+    q("#pSum").textContent = found.length ? `Found ${found.length}${add.length<found.length?`, ${found.length-add.length} already listed`:""}` : "None found on this route"; };
   q("form").onsubmit=async ev=>{
     ev.preventDefault(); const err=q("#fErr");
     const title=q("#fTitle").value.trim(), c=parseCoords(q("#fCoords").value), start=q("#fStart").value, end=q("#fEnd").value;
     if(!title){ err.textContent="Add a title."; return; } if(!start){ err.textContent="Add the date it started."; return; }
     if(!c){ err.textContent="Coordinates should look like 37.2690, -112.9480."; return; } if(end&&end<start){ err.textContent="The end date is before the start date."; return; }
-    const row={title,kind:q("#fKind").value,place:q("#fPlace").value.trim(),start_date:start,end_date:end||null,lat:+c[0].toFixed(6),lng:+c[1].toFixed(6),route:rpts,notes:q("#fNotes").value,gear:[...new Set(q("#fGear").value.split("\n").map(x=>x.trim()).filter(Boolean))]};
+    const row={title,kind:q("#fKind").value,place:q("#fPlace").value.trim(),start_date:start,end_date:end||null,lat:+c[0].toFixed(6),lng:+c[1].toFixed(6),route:rpts,notes:q("#fNotes").value,gear:[...new Set(q("#fGear").value.split("\n").map(x=>x.trim()).filter(Boolean))],
+      peaks:q("#fPeaks").value.split("\n").map(x=>x.trim()).filter(Boolean).map(parsePeakLine).map(p=>{ const k=knownPeaks.find(x=>x.name.toLowerCase()===p.name.toLowerCase()); return k&&k.lat!=null?{...p,lat:k.lat,lng:k.lng,elev_m:p.elev_m??k.elev_m}:p; })};
+    let tripId=q("#fTrip").value;
+    if(tripId==="__new"){ const tt=q("#fTripNew").value.trim(); if(!tt){ err.textContent="Name the new trip."; return; }
+      const r=await sb.from("trips").insert({title:tt}).select().single(); if(r.error){ err.textContent="Couldn't create the trip: "+r.error.message; return; } tripId=r.data.id; }
+    row.trip_id=tripId||null;
     q("#saveBtn").disabled=true;
     const res = isNew ? await sb.from("entries").insert(row).select().single() : await sb.from("entries").update(row).eq("id",e.id).select().single();
     if(res.error){ err.textContent="Couldn't save: "+res.error.message; q("#saveBtn").disabled=false; return; }
@@ -608,10 +756,12 @@ $("#addBtn").onclick=()=>openForm(null);
 $("#tally").onclick=()=>{ select(null); $("#sheet").scrollIntoView({behavior:reduce?"auto":"smooth"}); };
 initMap(); setupMapButtons(); setupFilters(); stravaReturn();
 loadEntries().then(()=>{
-  const want=new URL(location.href).searchParams.get("e"), linked=want&&entries.find(e=>e.id===want);
-  if(linked) selected=linked.id; else if(want) setUrl(null);
+  const sp=new URL(location.href).searchParams, want=sp.get("e"), wantT=sp.get("t");
+  const linked=want&&entries.find(e=>e.id===want), linkedT=!linked&&wantT&&tripById(wantT);
+  if(linked) selected=linked.id; else if(linkedT) selTrip=linkedT.id; else if(want||wantT) setUrl(null);
   renderAll();
-  const go=()=>{ drawRoutes(); setTimeout(()=>linked?flyTo(linked):fitAll(true),400); };
+  const go=()=>{ drawRoutes(); setTimeout(()=>linked?flyTo(linked):linkedT?fitTo(tripEntries(linkedT.id)):fitAll(true),400); };
+  if(linkedT){ document.title=`${linkedT.title} · Log`; const b=document.querySelector(`.triphead[data-trip="${CSS.escape(linkedT.id)}"]`); if(b) b.scrollIntoView({block:"center"}); window.scrollTo(0,0); }
   if(map){ if(map.loaded()) go(); else map.once("load",go); }
   if(linked){ document.title=`${linked.title} · Log`; const b=document.querySelector(`.entry[data-id="${CSS.escape(linked.id)}"]`); if(b) b.scrollIntoView({block:"center"}); window.scrollTo(0,0); }
 });
