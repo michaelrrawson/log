@@ -47,10 +47,14 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .chipsep{flex-basis:100%;height:0}
 .list{flex:1;overflow-y:auto;margin:6px -16px 0;padding:0 16px 16px}
 .year{color:var(--muted);padding:16px 0 4px}
-.entry{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;width:100%;text-align:left;padding:10px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.entry{display:grid;grid-template-columns:44px minmax(0,1fr) 30px;gap:10px;width:100%;text-align:left;padding:10px 0;border-bottom:1px solid var(--line);align-items:baseline}
 .entry .d{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .entry .t{font-weight:500;display:block;overflow-wrap:anywhere}
 .entry .m{display:block;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shape{width:30px;height:30px;align-self:center;fill:none;stroke:var(--muted);stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round}
+.shape circle{fill:var(--muted);stroke:none}
+.entry:hover .shape,.entry[aria-current="true"] .shape{stroke:var(--fg)}
+.entry[aria-current="true"] .shape circle{fill:var(--fg)}
 .entry:hover .t{text-decoration:underline;text-underline-offset:3px}
 .entry[aria-current="true"] .t{text-decoration:underline;text-decoration-color:var(--pin);text-decoration-thickness:2px;text-underline-offset:4px}
 .entry[aria-current="true"] .d{color:var(--fg)}
@@ -60,7 +64,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .triphead .m{grid-column:2;color:var(--muted);font-size:12px}
 .triphead:hover .t{text-decoration:underline;text-underline-offset:3px}
 .triphead[aria-current="true"] .t{text-decoration:underline;text-decoration-color:var(--pin);text-decoration-thickness:2px;text-underline-offset:4px}
-.entry.intrip{padding-left:12px;grid-template-columns:32px minmax(0,1fr);border-left:1px solid var(--line)}
+.entry.intrip{padding-left:12px;grid-template-columns:32px minmax(0,1fr) 30px;border-left:1px solid var(--line)}
 .emptylist{color:var(--muted);padding:16px 0;margin:0}
 .foot{display:flex;justify-content:space-between;gap:10px;padding:12px 0 calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);color:var(--muted);flex-wrap:wrap}
 .foot .link{color:var(--muted);letter-spacing:inherit;text-transform:inherit;font-size:inherit}
@@ -145,6 +149,24 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .btn[disabled]{opacity:.4;cursor:default}
 .del{color:var(--danger);text-decoration:underline;text-underline-offset:3px}
 .intro{max-width:52ch;color:var(--muted)}
+.calyear{margin-bottom:14px;max-width:760px}
+.calhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.calhead .label{color:var(--fg)}
+.calhead .mono{font-size:12px;color:var(--muted)}
+.cal{display:block;width:100%;height:auto}
+.cal text{font:9px var(--ui);fill:var(--muted)}
+.cal rect{fill:var(--tile)}
+.cal rect.on{cursor:pointer}
+.cal rect.l1,.calkey .l1{fill:color-mix(in srgb,var(--fg) 40%,var(--tile));background:color-mix(in srgb,var(--fg) 40%,var(--tile))}
+.cal rect.l2,.calkey .l2{fill:color-mix(in srgb,var(--fg) 70%,var(--tile));background:color-mix(in srgb,var(--fg) 70%,var(--tile))}
+.cal rect.l3,.calkey .l3{fill:var(--fg);background:var(--fg)}
+.cal rect.on:hover{fill:var(--pin)}
+.calkey{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin:0}
+.calkey i{display:inline-block;width:10px;height:10px}
+.calkey span:first-child{margin-right:2px}.calkey span:last-child{margin-left:2px}
+.specs.ext{margin-bottom:0}
+.specs dd.via{font-family:var(--ui);font-size:13px;color:var(--muted)}
+.specs dd.via button{color:var(--muted)}
 .kickerlink{text-decoration:underline;text-underline-offset:3px;color:var(--fg);letter-spacing:inherit;text-transform:inherit;font-size:inherit;font-weight:inherit;text-align:left}
 .peaklist,.daylist,.otdlist{list-style:none;margin:0;padding:0;max-width:720px}
 .peaklist li{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid var(--line)}

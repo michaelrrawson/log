@@ -259,6 +259,25 @@ function renderTally(){
   $("#nDays").textContent=v.reduce((s,e)=>s+days(e.start_date,e.end_date),0);
   $("#nMiles").textContent=Math.round(mi(v.reduce((s,e)=>s+entryMeters(e),0))).toLocaleString();
 }
+// tiny line drawing of the route, north up, scaled to fit; cached per route
+const shapeCache=new Map();
+function shapeSVG(e){
+  const r=e.route, key=e.id+":"+r.length;
+  if(shapeCache.has(key)) return shapeCache.get(key);
+  let out;
+  if(r.length<2) out=`<svg class="shape" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="2"/></svg>`;
+  else{
+    const k=Math.cos(r[0][0]*rad); let pts=r.map(p=>[p[1]*k,-p[0]]);
+    const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]), x0=Math.min(...xs), y0=Math.min(...ys);
+    const span=Math.max(Math.max(...xs)-x0, Math.max(...ys)-y0)||1e-9, pad=3, sc=(32-2*pad)/span;
+    const ox=pad+((32-2*pad)-(Math.max(...xs)-x0)*sc)/2, oy=pad+((32-2*pad)-(Math.max(...ys)-y0)*sc)/2;
+    pts=pts.map(p=>[+(ox+(p[0]-x0)*sc).toFixed(1),+(oy+(p[1]-y0)*sc).toFixed(1)]);
+    const keep=[pts[0]]; for(const p of pts){ const q=keep.at(-1); if(Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1])>=0.8) keep.push(p); }
+    keep.push(pts.at(-1));
+    out=`<svg class="shape" viewBox="0 0 32 32" aria-hidden="true"><polyline points="${keep.map(p=>p.join(",")).join(" ")}"/></svg>`;
+  }
+  shapeCache.set(key,out); return out;
+}
 function renderList(){
   const list=$("#list");
   if(!entries.length){ list.innerHTML=`<p class="emptylist">${canEdit?"Nothing logged yet. Choose Add Entry to drop your first pin.":"Nothing logged yet."}</p>`; return; }
@@ -272,7 +291,7 @@ function renderList(){
     if(t && t.id!==cur){ const tm=tripEntries(t.id), r=tripRange(t.id);
       html+=`<button class="triphead" type="button" data-trip="${esc(t.id)}" aria-current="${t.id===selTrip}"><span class="label">Trip</span><span class="t">${esc(t.title)}</span><span class="m mono">${esc(fmtRange(r[0],r[1]))} · ${tm.length}</span></button>`; }
     cur = t ? t.id : null;
-    html+=`<button class="entry${t?" intrip":""}" type="button" data-id="${esc(e.id)}" aria-current="${e.id===selected}"><span class="d">${d?`${String(d.m).padStart(2,"0")}.${String(d.d).padStart(2,"0")}`:"—"}</span><span><span class="t">${esc(e.title)}</span><span class="m">${esc(e.place||KINDS[e.kind])}</span></span></button>`;
+    html+=`<button class="entry${t?" intrip":""}" type="button" data-id="${esc(e.id)}" aria-current="${e.id===selected}"><span class="d">${d?`${String(d.m).padStart(2,"0")}.${String(d.d).padStart(2,"0")}`:"—"}</span><span><span class="t">${esc(e.title)}</span><span class="m">${esc(e.place||KINDS[e.kind])}</span></span>${shapeSVG(e)}</button>`;
   }
   list.innerHTML=html;
 }
@@ -490,10 +509,66 @@ function totalsHTML(){
     ${withV&&withV<v.length?`<p class="tothint">Vertical and moving time come from Strava and cover ${withV} of these ${v.length} entries.</p>`:""}
     ${tripRows.length?`<div class="block"><div class="bhead label"><span>Trips</span><span class="mono">${tripRows.length}</span></div><div class="tablewrap"><table class="tot"><thead><tr><th scope="col" class="label">Trip</th><th scope="col" class="label">Dates</th><th scope="col" class="label">Days</th><th scope="col" class="label">Miles</th></tr></thead><tbody>${tripRows.map(({t,l})=>{ const [a,b]=tripRange(t.id); return `<tr><th scope="row"><button type="button" data-opentrip="${esc(t.id)}">${esc(t.title)}</button></th><td>${esc(fmtRange(a,b))}</td><td>${days(a,b)}</td><td>${Math.round(miles(l)).toLocaleString()}</td></tr>`; }).join("")}</tbody></table></div></div>`:""}
     ${peaks.length?`<div class="block"><div class="bhead label"><span>Summits</span><span class="mono">${peaks.length} peaks</span></div><div class="tablewrap"><table class="tot"><thead><tr><th scope="col" class="label">Peak</th><th scope="col" class="label">Elevation</th><th scope="col" class="label">Times</th><th scope="col" class="label">Last</th></tr></thead><tbody>${peaks.map(p=>{ const last=p.visits.at(-1); return `<tr><th scope="row">${esc(p.name)}</th><td>${elevTxt(p)||"—"}</td><td>${p.visits.length}</td><td><button type="button" data-open="${esc(last.id)}">${esc(fmtRange(last.start_date))}</button></td></tr>`; }).join("")}</tbody></table></div></div>`:""}
+    ${calendarHTML(v)}
+    ${extremesHTML(v)}
     <div class="block"><div class="bhead label"><span>By activity</span></div><div class="tablewrap"><table class="tot">${head("Activity")}<tbody>${byKind.map(g=>row(g.label,g.l)).join("")}</tbody></table></div></div>
     <div class="block"><div class="bhead label"><span>By year</span></div><div class="tablewrap"><table class="tot">${head("Year")}<tbody>${byYear.map(g=>row(g.label,g.l)).join("")}</tbody></table></div></div>
     ${byGear.length?`<div class="block"><div class="bhead label"><span>Gear</span><span class="mono">miles on each</span></div><div class="tablewrap"><table class="tot">${head("Item")}<tbody>${byGear.map(([g,l])=>row(esc(g),l)).join("")}</tbody></table></div></div>`:""}`;
 }
+// Calendar: one square per day, filled on days you were out
+function calendarHTML(v){
+  const dayMap=new Map(); // "YYYY-MM-DD" -> [entries]
+  for(const e of v){ const s=Date.parse(e.start_date); if(isNaN(s)) continue; const n=days(e.start_date,e.end_date);
+    for(let i=0;i<n;i++){ const k=new Date(s+i*864e5).toISOString().slice(0,10); (dayMap.get(k)||dayMap.set(k,[]).get(k)).push(e); } }
+  if(!dayMap.size) return "";
+  const years=[...new Set([...dayMap.keys()].map(k=>+k.slice(0,4)))].sort((a,b)=>b-a);
+  const C=11, G=2, step=C+G, top=14, left=0;
+  // longest run of consecutive days out
+  const ks=[...dayMap.keys()].sort(); let best=1, run=1;
+  for(let i=1;i<ks.length;i++){ run = Date.parse(ks[i])-Date.parse(ks[i-1])===864e5 ? run+1 : 1; best=Math.max(best,run); }
+  const svgs=years.map(y=>{
+    const jan1=Date.UTC(y,0,1), dow0=new Date(jan1).getUTCDay(), nd=(Date.UTC(y+1,0,1)-jan1)/864e5;
+    const weeks=Math.ceil((nd+dow0)/7), W=weeks*step, H=top+7*step;
+    let cells="", labels="", count=0;
+    for(let m=0;m<12;m++){ const di=(Date.UTC(y,m,1)-jan1)/864e5, w=Math.floor((di+dow0)/7); labels+=`<text x="${left+w*step}" y="10">${MON[m]}</text>`; }
+    for(let i=0;i<nd;i++){
+      const k=new Date(jan1+i*864e5).toISOString().slice(0,10), w=Math.floor((i+dow0)/7), dd=(i+dow0)%7, hit=dayMap.get(k);
+      const x=left+w*step, yy=top+dd*step;
+      if(hit){ count++; const mi_=mi(hit.reduce((s,e)=>s+entryMeters(e)/days(e.start_date,e.end_date),0)), lvl=mi_>=15?3:mi_>=6?2:1;
+        cells+=`<rect class="on l${lvl}" x="${x}" y="${yy}" width="${C}" height="${C}" data-open="${esc(hit[0].id)}"><title>${esc(fmtRange(k))}: ${esc(hit.map(e=>e.title).join(", "))}</title></rect>`; }
+      else cells+=`<rect x="${x}" y="${yy}" width="${C}" height="${C}"/>`;
+    }
+    return `<div class="calyear"><div class="calhead"><span class="label">${y}</span><span class="mono">${count} day${count===1?"":"s"} out</span></div><svg class="cal" viewBox="0 0 ${W} ${H}" role="img" aria-label="${count} days out in ${y}">${labels}${cells}</svg></div>`;
+  }).join("");
+  return `<div class="block"><div class="bhead label"><span>Calendar</span><span class="mono">longest streak ${best} day${best===1?"":"s"}</span></div>${svgs}
+    <p class="calkey mono"><span>Less</span><i class="l1"></i><i class="l2"></i><i class="l3"></i><span>More miles</span></p></div>`;
+}
+
+// Extremes: highest summit, farthest from home, and the compass points
+function extremesHTML(v){
+  if(!v.length) return "";
+  // home = the start point with the most other starts within 15 km
+  const starts=entries.map(e=>[e.lat,e.lng]);
+  let home=starts[0], bestN=-1;
+  for(const a of starts){ const n=starts.filter(b=>hav(a,b)<15000).length; if(n>bestN){ bestN=n; home=a; } }
+  const homeEntry=entries.filter(e=>hav([e.lat,e.lng],home)<15000).map(e=>(e.place.split(",")[0]||"").replace(/^near /,"").trim()).filter(Boolean);
+  const homeName=homeEntry.sort((a,b)=>homeEntry.filter(x=>x===b).length-homeEntry.filter(x=>x===a).length)[0]||"home";
+  const pts=v.flatMap(e=>(e.route.length?e.route:[[e.lat,e.lng]]).map(p=>({p,e})));
+  const pick=f=>pts.reduce((a,b)=>f(b)>f(a)?b:a);
+  const far=pick(x=>hav(home,x.p)), n=pick(x=>x.p[0]), s_=pick(x=>-x.p[0]), east=pick(x=>x.p[1]), west=pick(x=>-x.p[1]);
+  const top=peakTally(v)[0];
+  const lat=x=>`${Math.abs(x).toFixed(2)}° ${x>=0?"N":"S"}`, lng=x=>`${Math.abs(x).toFixed(2)}° ${x>=0?"E":"W"}`;
+  const row=(label,e,val)=>`<div><dt class="label">${label}</dt><dd>${val}</dd><dd class="via"><button type="button" data-open="${esc(e.id)}">${esc(e.title)}</button></dd></div>`;
+  return `<div class="block"><div class="bhead label"><span>Extremes</span></div><dl class="specs ext">
+    ${top&&top.elev_m?row("Highest summit",top.visits.at(-1),`${esc(top.name)} · ${elevTxt(top)}`):""}
+    ${row(`Farthest from ${esc(homeName)}`,far.e,`${Math.round(mi(hav(home,far.p))).toLocaleString()} mi`)}
+    ${row("Northernmost",n.e,lat(n.p[0]))}
+    ${row("Southernmost",s_.e,lat(s_.p[0]))}
+    ${row("Easternmost",east.e,lng(east.p[1]))}
+    ${row("Westernmost",west.e,lng(west.p[1]))}
+  </dl></div>`;
+}
+
 // On this day: the same date in earlier years, or failing that, the same week
 function onThisDayHTML(){
   const now=new Date(), y=now.getFullYear(), md=d=>d.m*100+d.d;
