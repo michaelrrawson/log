@@ -1,0 +1,172 @@
+// Little animated 3D figures that ride along the route during replay.
+// Built from simple shapes with three.js (loaded only when a replay starts), drawn into the map
+// as a Mapbox custom layer so they stand on the 3D terrain and face along the route.
+// Model units are meters, origin at the feet, facing +Z, up +Y.
+(function(){
+  const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js";
+  const KINDS = { hike:"hiker", climb:"hiker", backpacking:"backpacker", trailrun:"runner", bike:"cyclist", mtb:"cyclist", ski:"skier", water:"paddler" };
+  const ACCENT = 0x2f9bff, SCREEN_PX = 46; // figure height on screen, in pixels
+  let loading = null;
+
+  function load(){
+    if(window.THREE) return Promise.resolve();
+    if(!loading) loading = new Promise((res, rej) => { const s=document.createElement("script"); s.src=THREE_URL; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    return loading;
+  }
+
+  function build(type){
+    const T = window.THREE;
+    const mat = c => new T.MeshLambertMaterial({ color:c });
+    const M = { skin:mat(0xf0c6a2), shirt:mat(ACCENT), pants:mat(0x23262c), shoe:mat(0x121212), dark:mat(0x1b1d21), tire:mat(0x0c0c0c), metal:mat(0xa7adb3), pack:mat(0x44525f), helmet:mat(0xf4f4f4) };
+    const mesh = (g,m) => new T.Mesh(g,m);
+    // a limb hanging down from a pivot: rotation.x < 0 swings it forward
+    const limb = (len, r, m) => { const p=new T.Group(), c=mesh(new T.CapsuleGeometry(r, Math.max(.01,len-2*r), 4, 8), m); c.position.y=-len/2; p.add(c); p.len=len; return p; };
+    const tube = (a, b, r, m) => { const A=new T.Vector3(...a), B=new T.Vector3(...b), d=B.clone().sub(A), c=mesh(new T.CylinderGeometry(r,r,d.length(),8), m);
+      c.position.copy(A).add(B).multiplyScalar(.5); c.quaternion.setFromUnitVectors(new T.Vector3(0,1,0), d.normalize()); return c; };
+
+    function human({ legs=true }={}){
+      const root=new T.Group(), pelvis=new T.Group(); root.add(pelvis);
+      const torso=new T.Group(); pelvis.add(torso);
+      const body=mesh(new T.CapsuleGeometry(.15,.3,4,10), M.shirt); body.position.y=.3; body.scale.set(1.15,1,.8); torso.add(body);
+      const head=mesh(new T.SphereGeometry(.115,14,10), M.skin); head.position.y=.72; torso.add(head);
+      const H = { root, pelvis, torso, head };
+      for(const [side,x] of [["l",.21],["r",-.21]]){
+        const arm=limb(.3,.05,M.shirt); arm.position.set(x,.56,0); torso.add(arm);
+        const fore=limb(.28,.045,M.skin); fore.position.y=-.3; arm.add(fore);
+        H[side+"Arm"]=arm; H[side+"Fore"]=fore;
+        if(legs){
+          const thigh=limb(.45,.07,M.pants); thigh.position.set(x*.5,0,0); pelvis.add(thigh);
+          const shin=limb(.45,.06,M.pants); shin.position.y=-.45; thigh.add(shin);
+          const foot=mesh(new T.BoxGeometry(.1,.07,.24), M.shoe); foot.position.set(0,-.44,.06); shin.add(foot);
+          H[side+"Thigh"]=thigh; H[side+"Shin"]=shin; H[side+"Foot"]=foot;
+        }
+      }
+      pelvis.position.y = legs ? .93 : 0;
+      return H;
+    }
+    // two-link leg reaching from the hip to a target (y,z) given in the pelvis frame; knee points forward
+    function reach(thigh, shin, ty, tz){
+      const L1=thigh.len, L2=shin.len, d=Math.min(L1+L2-1e-3, Math.max(.05, Math.hypot(ty,tz)));
+      const base=Math.atan2(-tz,-ty), a=Math.acos((L1*L1+d*d-L2*L2)/(2*L1*d)), k=Math.acos((L1*L1+L2*L2-d*d)/(2*L1*L2));
+      thigh.rotation.x = base - a; shin.rotation.x = Math.PI - k;
+    }
+
+    const root=new T.Group(); let tick;
+    if(type==="runner" || type==="hiker" || type==="backpacker"){
+      const H=human(); root.add(H.root);
+      const run = type==="runner";
+      const legAmp = run?.75:.38, armAmp = run?.7:.32, lean = run?.2:.08, cadence = run?2.6:1.7;
+      if(!run){ // trekking pole in the right hand
+        const pole=tube([0,0,0],[0,-1.05,.12],.012,M.metal); pole.position.y=-.26; H.rFore.add(pole);
+      }
+      if(type==="backpacker"){ const pack=mesh(new T.BoxGeometry(.36,.52,.22), M.pack); pack.position.set(0,.36,-.21); H.torso.add(pack);
+        const roll=mesh(new T.CylinderGeometry(.08,.08,.38,10), M.shirt); roll.rotation.z=Math.PI/2; roll.position.set(0,.66,-.21); H.torso.add(roll); }
+      H.torso.rotation.x = lean;
+      let p=0;
+      tick=(dt,m)=>{ p += dt*cadence*2*Math.PI*Math.min(1.6,m); const s=Math.sin(p), c=Math.cos(p), w=Math.min(1,m*1.5);
+        H.lThigh.rotation.x = -legAmp*s*w; H.rThigh.rotation.x = legAmp*s*w;
+        H.lShin.rotation.x = (run?.25:.08) + w*(run?1.2:.55)*Math.max(0, c);
+        H.rShin.rotation.x = (run?.25:.08) + w*(run?1.2:.55)*Math.max(0,-c);
+        H.lArm.rotation.x = armAmp*s*w; H.rArm.rotation.x = -armAmp*s*w*(run?1:.6) - (run?0:.25);
+        H.lFore.rotation.x = run?-1.4:-.35; H.rFore.rotation.x = run?-1.4:-.5;
+        H.pelvis.position.y = .93 - (run?.06:.02)*w*(1-Math.abs(c)) - (run?.05:0);
+      };
+    }
+    else if(type==="skier"){
+      const H=human(); root.add(H.root); H.torso.rotation.x=.25;
+      for(const s of ["l","r"]){
+        const ski=mesh(new T.BoxGeometry(.09,.025,1.7), M.dark); ski.position.set(0,-.48,.18); H[s+"Shin"].add(ski); H[s+"Ski"]=ski;
+        const pole=tube([0,0,0],[0,-1.0,-.25],.011,M.metal); pole.position.y=-.26; H[s+"Fore"].add(pole);
+      }
+      let p=0;
+      tick=(dt,m)=>{ p += dt*1.5*2*Math.PI*Math.min(1.6,m); const s=Math.sin(p), w=Math.min(1,m*1.5);
+        H.lThigh.rotation.x = -.15-.32*s*w; H.rThigh.rotation.x = -.15+.32*s*w; H.lShin.rotation.x = .45; H.rShin.rotation.x = .45;
+        for(const k of ["l","r"]) H[k+"Ski"].rotation.x = -(H[k+"Thigh"].rotation.x + H[k+"Shin"].rotation.x); // keep skis flat on the snow
+        H.lArm.rotation.x = .4*s*w-.2; H.rArm.rotation.x = -.4*s*w-.2; H.lFore.rotation.x = H.rFore.rotation.x = -.5;
+        H.pelvis.position.y = .84;
+      };
+    }
+    else if(type==="cyclist"){
+      const bike=new T.Group(); root.add(bike);
+      const R=.34, rear=[0,R,-.52], front=[0,R,.55], bb=[0,.3,-.02], seat=[0,.92,-.2], bar=[0,1.0,.42];
+      const wheel=z=>{ const g=new T.Group(); g.position.set(0,R,z);
+        g.add(mesh(new T.TorusGeometry(R,.035,8,28), M.tire)); const rim=mesh(new T.TorusGeometry(R-.04,.012,6,24), M.metal); g.add(rim);
+        for(let i=0;i<4;i++){ const sp=tube([0,0,0],[0,R-.05,0],.006,M.metal); sp.rotation.z=i*Math.PI/2; g.add(sp); }
+        g.rotation.y=Math.PI/2; bike.add(g); return g; };
+      const wr=wheel(rear[2]), wf=wheel(front[2]);
+      const fm=M.shirt; // frame in the accent color
+      bike.add(tube(rear,bb,.025,fm), tube(bb,seat,.028,fm), tube(seat,[0,.93,.36],.028,fm), tube([0,.93,.36],bb,.03,fm), tube(rear,seat,.02,fm), tube([0,.93,.36],front,.025,fm));
+      bike.add(tube([0,.92,.36],bar,.022,M.dark), tube([-.22,1.0,.44],[.22,1.0,.44],.018,M.dark));
+      const saddle=mesh(new T.BoxGeometry(.1,.04,.24), M.dark); saddle.position.set(0,.95,-.2); bike.add(saddle);
+      const crank=new T.Group(); crank.position.set(...bb); bike.add(crank);
+      const CL=.17; crank.add(tube([.07,0,0],[.07,-CL,0],.015,M.dark), tube([-.07,0,0],[-.07,CL,0],.015,M.dark));
+      const H=human(); bike.add(H.root); H.pelvis.position.set(0,.98,-.2); H.torso.rotation.x=.95;
+      const helmet=mesh(new T.SphereGeometry(.13,14,8,0,Math.PI*2,0,Math.PI/2), M.helmet); helmet.position.y=.74; H.torso.add(helmet);
+      H.lArm.rotation.x = H.rArm.rotation.x = -.62; H.lFore.rotation.x = H.rFore.rotation.x = -.25;
+      H.head.position.z=.05;
+      let a=0;
+      tick=(dt,m)=>{ const v=Math.min(2,m);
+        wr.rotateZ(-dt*v*7); wf.rotateZ(-dt*v*7);
+        a += dt*2*Math.PI*1.3*v; crank.rotation.x = a;   // pedals go forward over the top
+        const hy=.98, hz=-.2, c=Math.cos(a)*CL, sn=Math.sin(a)*CL;
+        const feet = { l:[bb[1]-c, bb[2]-sn], r:[bb[1]+c, bb[2]+sn] };
+        for(const k of ["l","r"]){ reach(H[k+"Thigh"], H[k+"Shin"], feet[k][0]-hy, feet[k][1]-hz);
+          H[k+"Foot"].rotation.x = -(H[k+"Thigh"].rotation.x+H[k+"Shin"].rotation.x); }
+      };
+    }
+    else if(type==="paddler"){
+      const kayak=mesh(new T.SphereGeometry(1,20,12), M.shirt); kayak.scale.set(.32,.16,2.2); kayak.position.y=.12; root.add(kayak);
+      const H=human({legs:false}); root.add(H.root); H.pelvis.position.y=.14;
+      const paddle=new T.Group(); paddle.position.set(0,.62,.28); H.torso.add(paddle);
+      paddle.add(tube([-1.05,0,0],[1.05,0,0],.016,M.dark));
+      for(const x of [-1.05,1.05]){ const b=mesh(new T.BoxGeometry(.03,.36,.16), M.dark); b.position.x=x; paddle.add(b); }
+      H.lArm.rotation.x = H.rArm.rotation.x = -1.2; H.lFore.rotation.x = H.rFore.rotation.x = -.3;
+      let p=0;
+      tick=(dt,m)=>{ p += dt*1.1*2*Math.PI*Math.min(1.6,m); const s=Math.sin(p)*Math.min(1,m*1.5);
+        paddle.rotation.z = .55*s; paddle.rotation.y = .35*s; H.torso.rotation.y = .3*s; };
+    }
+    root.traverse(o=>{ if(o.isMesh) o.frustumCulled=false; });
+    return { root, tick: tick || (()=>{}) };
+  }
+
+  function create(map, kind){
+    const T = window.THREE, type = KINDS[kind];
+    const camera=new T.Camera(), scene=new T.Scene();
+    scene.add(new T.HemisphereLight(0xffffff, 0x445066, 1.0));
+    const sun=new T.DirectionalLight(0xffffff, .8); sun.position.set(.5,1,.7); scene.add(sun);
+    const fig=build(type); scene.add(fig.root);
+    const st={ lngLat:null, heading:null, moving:0, last:performance.now() };
+    const id="rider3d-"+Math.random().toString(36).slice(2,7);
+    let renderer;
+    map.addLayer({ id, type:"custom", renderingMode:"3d",
+      onAdd(m, gl){ renderer=new T.WebGLRenderer({ canvas:m.getCanvas(), context:gl, antialias:true }); renderer.autoClear=false; },
+      render(gl, matrix){
+        if(!st.lngLat) return;
+        const now=performance.now(), dt=Math.min(.05,(now-st.last)/1000); st.last=now;
+        fig.tick(dt, st.moving);
+        const elev = map.queryTerrainElevation(st.lngLat, { exaggerated:true }) || 0;
+        const mc = mapboxgl.MercatorCoordinate.fromLngLat(st.lngLat, elev);
+        const lat = st.lngLat[1]*Math.PI/180, mpp = 40075016.686*Math.cos(lat)/(512*Math.pow(2, map.getZoom()));
+        const s = mc.meterInMercatorCoordinateUnits() * (SCREEN_PX*mpp/1.8);
+        const l = new T.Matrix4().makeTranslation(mc.x, mc.y, mc.z)
+          .scale(new T.Vector3(s, -s, s))
+          .multiply(new T.Matrix4().makeRotationX(Math.PI/2))
+          .multiply(new T.Matrix4().makeRotationY(Math.PI - (st.heading||0)*Math.PI/180));
+        camera.projectionMatrix = new T.Matrix4().fromArray(matrix).multiply(l);
+        renderer.resetState(); renderer.render(scene, camera);
+        if(st.moving>0.01) map.triggerRepaint();
+      }
+    });
+    return {
+      // lngLat [lng,lat]; heading in degrees clockwise from north; moving: 0 = stopped, 1 = normal pace
+      update(lngLat, heading, moving){
+        st.lngLat=lngLat; st.moving=moving;
+        if(st.heading==null) st.heading=heading;
+        else { let d=((heading-st.heading+540)%360)-180; st.heading=(st.heading+d*.15+360)%360; }
+      },
+      remove(){ if(map.getLayer(id)) map.removeLayer(id); }
+    };
+  }
+
+  window.Rider3D = { supports: k => !!KINDS[k], load, create };
+})();

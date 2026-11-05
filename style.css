@@ -1,7 +1,7 @@
 /* Log — Michael's minimal catalog look: quiet ledger on the left, full-height 3D map, plain spec sheet below. */
 :root{
   --bg:#fafaf8; --fg:#141513; --muted:#7b7d77; --line:#e4e5e0; --tile:#efefeb; --surface:#ffffff;
-  --pin:#ff3ea5; --pin-edge:#0e0f0d; --danger:#b3332f;
+  --pin:#2f9bff; --pin-edge:#0e0f0d; --danger:#b3332f;
   --ui:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;

@@ -179,13 +179,13 @@ function setupStyle(){
   map.setFog({range:[1,9],color:"rgb(186,210,235)","high-color":"rgb(36,92,223)","horizon-blend":0.03,"space-color":"rgb(8,10,20)","star-intensity":0.25});
   map.addSource("routes",{type:"geojson",data:routesGeo()});
   map.addSource("replay",{type:"geojson",data:{type:"FeatureCollection",features:[]}});
-  map.addLayer({id:"routes-glow",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ff3ea5","line-width":["case",["get","on"],9,0],"line-opacity":0.25,"line-blur":4}});
-  map.addLayer({id:"routes-line",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ff3ea5","line-width":["case",["get","on"],3,1.6],"line-opacity":["case",["get","on"],1,0.6]}});
-  map.addLayer({id:"replay-glow",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ff3ea5","line-width":12,"line-opacity":0.3,"line-blur":5}});
-  map.addLayer({id:"replay-line",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ff3ea5","line-width":4}});
+  map.addLayer({id:"routes-glow",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#2f9bff","line-width":["case",["get","on"],9,0],"line-opacity":0.25,"line-blur":4}});
+  map.addLayer({id:"routes-line",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#2f9bff","line-width":["case",["get","on"],3,1.6],"line-opacity":["case",["get","on"],1,0.6]}});
+  map.addLayer({id:"replay-glow",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#2f9bff","line-width":12,"line-opacity":0.3,"line-blur":5}});
+  map.addLayer({id:"replay-line",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#2f9bff","line-width":4}});
   map.addSource("trail",{type:"geojson",lineMetrics:true,data:{type:"Feature",properties:{},geometry:{type:"LineString",coordinates:[[0,0],[0,0]]}}});
-  map.addLayer({id:"trail-glow",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#ff3ea5","line-width":12,"line-opacity":0.3,"line-blur":5,"line-trim-offset":[0,1]}});
-  map.addLayer({id:"trail-line",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#ff3ea5","line-width":4,"line-trim-offset":[0,1]}});
+  map.addLayer({id:"trail-glow",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#2f9bff","line-width":12,"line-opacity":0.3,"line-blur":5,"line-trim-offset":[0,1]}});
+  map.addLayer({id:"trail-line",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#2f9bff","line-width":4,"line-trim-offset":[0,1]}});
   applyVisibility();
 }
 function routesGeo(){
@@ -846,6 +846,10 @@ function startReplay(e){
   const headEl=document.createElement("div"); const fig=REPLAY_FIGS[e.kind];
   headEl.className="rphead"+(fig?" fig":""); if(fig) headEl.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${fig}</svg>`;
   const dot=new mapboxgl.Marker({element:headEl}).setLngLat(ll(route[0])).addTo(map);
+  // swap the flat marker for a little animated 3D figure once three.js has loaded
+  let rider=null;
+  if(window.Rider3D && Rider3D.supports(e.kind) && !reduce) Rider3D.load().then(()=>{ if(!replay||replay.e!==e) return;
+    try{ rider=Rider3D.create(map,e.kind); headEl.style.visibility="hidden"; }catch(err){ console.warn("3D figure unavailable",err); } }).catch(()=>{});
   const lock=["dragPan","scrollZoom","doubleClickZoom","boxZoom","keyboard","touchZoomRotate","dragRotate","touchPitch"];
   lock.forEach(h=>map[h]&&map[h].disable());
 
@@ -883,6 +887,7 @@ function startReplay(e){
     if(st.playing && st.d>=total){ st.playing=false; playEl.textContent="Replay"; }
     map.jumpTo(cam(st.d));
     dot.setLngLat(ll(rawAt(st.d))); trim(st.d/total);
+    if(rider) rider.update(ll(rawAt(st.d)), bearingOf(rawAt(st.d-15),rawAt(st.d+15)), st.v/(total/(baseDur/1000)));
     if(now-st.uiT>120){ st.uiT=now; seekEl.value=Math.round(st.d/total*1000); readEl.textContent=`${mi(st.d).toFixed(1)} / ${miles.toFixed(1)} mi`; }
     st.raf=requestAnimationFrame(frame);
   }
@@ -907,7 +912,7 @@ function startReplay(e){
     if(ev.key==="ArrowDown"){ ev.preventDefault(); setP(st.pT-3); }
   };
   document.addEventListener("keydown",onKey);
-  replay={ stop(fly){ alive=false; clearTimeout(startTimer); cancelAnimationFrame(st.raf); document.removeEventListener("keydown",onKey); bar.remove(); panel.remove(); title.remove(); dot.remove(); wrap.classList.remove("replay");
+  replay={ e, stop(fly){ alive=false; if(rider) rider.remove(); clearTimeout(startTimer); cancelAnimationFrame(st.raf); document.removeEventListener("keydown",onKey); bar.remove(); panel.remove(); title.remove(); dot.remove(); wrap.classList.remove("replay");
     lock.forEach(h=>map[h]&&map[h].enable()); map.setTerrain({source:"dem",exaggeration:prevEx});
     Object.values(markers).forEach(mk=>mk.getElement().style.visibility="");
     map.setLayoutProperty("trail-line","visibility","none"); map.setLayoutProperty("trail-glow","visibility","none");
