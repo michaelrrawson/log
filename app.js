@@ -55,7 +55,16 @@ function parseGPX(text){
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2800); }
 
 /* ---------- data: Supabase, with the JSON backup as fallback ---------- */
-const sb = (CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase) ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
+const sb = (CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase) ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
+  // Supabase's default cross-tab lock can hang forever when another tab of the log holds it,
+  // leaving the page stuck on "Loading…". Wait up to 3 s for it, then go ahead without it.
+  auth:{ lock: async (name, _t, fn) => {
+    if(!navigator.locks) return fn();
+    const ctl=new AbortController(); const timer=setTimeout(()=>ctl.abort(),3000);
+    try{ return await navigator.locks.request(name,{signal:ctl.signal},async()=>{ clearTimeout(timer); return fn(); }); }
+    catch(err){ if(err&&err.name==="AbortError") return fn(); throw err; }
+  } }
+}) : null;
 let entries=[], trips=[], selected=null, selTrip=null, canEdit=false, source="";
 const photoUrl = p => sb ? sb.storage.from("photos").getPublicUrl(p.path).data.publicUrl : (p.url||"");
 function norm(r){ return {...r, lat:+r.lat, lng:+r.lng, route:validRoute(r.route), photos:Array.isArray(r.photos)?r.photos:[], gear:Array.isArray(r.gear)?r.gear.filter(g=>typeof g==="string"&&g.trim()).map(g=>g.trim()):[], stats:(r.stats&&typeof r.stats==="object")?r.stats:{}, peaks:normPeaks(r.peaks), trip_id:r.trip_id||null, notes:r.notes||"", place:r.place||"", kind:KINDS[r.kind]?r.kind:"other"}; }
