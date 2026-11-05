@@ -167,13 +167,13 @@ function setupStyle(){
   map.setFog({range:[1,9],color:"rgb(186,210,235)","high-color":"rgb(36,92,223)","horizon-blend":0.03,"space-color":"rgb(8,10,20)","star-intensity":0.25});
   map.addSource("routes",{type:"geojson",data:routesGeo()});
   map.addSource("replay",{type:"geojson",data:{type:"FeatureCollection",features:[]}});
-  map.addLayer({id:"routes-glow",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":["case",["get","on"],9,0],"line-opacity":0.25,"line-blur":4}});
-  map.addLayer({id:"routes-line",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":["case",["get","on"],3,1.6],"line-opacity":["case",["get","on"],1,0.6]}});
-  map.addLayer({id:"replay-glow",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":12,"line-opacity":0.3,"line-blur":5}});
-  map.addLayer({id:"replay-line",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#39ff14","line-width":4}});
+  map.addLayer({id:"routes-glow",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ff3ea5","line-width":["case",["get","on"],9,0],"line-opacity":0.25,"line-blur":4}});
+  map.addLayer({id:"routes-line",type:"line",source:"routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ff3ea5","line-width":["case",["get","on"],3,1.6],"line-opacity":["case",["get","on"],1,0.6]}});
+  map.addLayer({id:"replay-glow",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ff3ea5","line-width":12,"line-opacity":0.3,"line-blur":5}});
+  map.addLayer({id:"replay-line",type:"line",source:"replay",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ff3ea5","line-width":4}});
   map.addSource("trail",{type:"geojson",lineMetrics:true,data:{type:"Feature",properties:{},geometry:{type:"LineString",coordinates:[[0,0],[0,0]]}}});
-  map.addLayer({id:"trail-glow",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#39ff14","line-width":12,"line-opacity":0.3,"line-blur":5,"line-trim-offset":[0,1]}});
-  map.addLayer({id:"trail-line",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#39ff14","line-width":4,"line-trim-offset":[0,1]}});
+  map.addLayer({id:"trail-glow",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#ff3ea5","line-width":12,"line-opacity":0.3,"line-blur":5,"line-trim-offset":[0,1]}});
+  map.addLayer({id:"trail-line",type:"line",source:"trail",layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#ff3ea5","line-width":4,"line-trim-offset":[0,1]}});
   applyVisibility();
 }
 function routesGeo(){
