@@ -154,6 +154,7 @@ function initMap(){
   if(!window.mapboxgl || !CFG.mapboxToken){ $("#mapErr").hidden=false; $("#mapErr").textContent="The map couldn't load. Check the Mapbox token in config.js."; return; }
   mapboxgl.accessToken = CFG.mapboxToken;
   map = new mapboxgl.Map({container:"map", style:STYLES.satellite, projection:"globe", center:[-40,30], zoom:1.6, pitch:0, attributionControl:true, antialias:true});
+  window.__logMap = map; // handy for debugging from the console
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:true}),"top-right");
   map.addControl(new mapboxgl.ScaleControl({unit:"imperial"}),"bottom-left");
   map.on("style.load", setupStyle);
@@ -227,7 +228,10 @@ function glideTo(cam){
     const t=Math.min(1,(now-t0)/dur), e=easeIO(t);
     const pos=new mapboxgl.MercatorCoordinate(p0.x+(p1.x-p0.x)*e, p0.y+(p1.y-p0.y)*e, p0.z+(p1.z-p0.z)*e + lift*Math.sin(Math.PI*e));
     const fc=new mapboxgl.FreeCameraOptions(pos, slerp(q0,q1,e)); map.setFreeCameraOptions(fc);
-    if(t<1 && camAnim) camAnim.raf=requestAnimationFrame(step); else camAnim=null;
+    if(t<1 && camAnim){ camAnim.raf=requestAnimationFrame(step); return; }
+    if(!camAnim) return; camAnim=null;
+    // settle: if the destination's terrain finished loading mid-glide, line the view up gently
+    map.easeTo({...cam,duration:900,easing:t=>1-Math.pow(1-t,3),essential:true});
   };
   camAnim.raf=requestAnimationFrame(step);
 }
