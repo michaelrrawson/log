@@ -5,6 +5,18 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const KINDS = {temple:"Temple & sacred site",backpacking:"Backpacking",highline:"Highline & rope swing",hike:"Hike",trailrun:"Trail run",bike:"Bike ride",mtb:"Mountain bike",ski:"Backcountry ski",climb:"Climbing & canyoneering",water:"Water & river",city:"City & culture",show:"Show & performance",road:"Road trip",other:"Other"};
+// Little figures that ride along the route during replay, one per activity kind (stroke drawings on a 24×24 grid).
+const _hiker='<circle cx="12.5" cy="4" r="2" class="f"/><path d="M12 7l-1 6M11 13l2 4v4M11 13l-2 4-1 4M12 8l3 3M16 10l2 11"/>';
+const _cyclist='<circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3.5"/><path d="M6 17l4-5h5l3 5M10 12l2 5"/><circle cx="14.5" cy="4.5" r="2" class="f"/><path d="M10 11l3-4 3 3.5M10 11l2 4"/>';
+const REPLAY_FIGS = {
+  hike:_hiker,
+  backpacking:_hiker+'<rect x="7.5" y="7" width="3.5" height="6" rx="1" class="f"/>',
+  trailrun:'<circle cx="15" cy="4" r="2" class="f"/><path d="M13 7l-3 6M12 8l3 2 2-1M12 8l-4 1M10 13l3 3-1 4M10 13l-3 3H4"/>',
+  bike:_cyclist, mtb:_cyclist,
+  ski:'<circle cx="14" cy="4" r="2" class="f"/><path d="M13 7l-3 5M10 12l2 3-1 3M10 12l-2 3-1 3M3 18.5l13 2.5M12 8l3 3 1 5"/>',
+  climb:_hiker,
+  water:'<path d="M3 16c3 2 15 2 18 0" /><circle cx="12" cy="7" r="2" class="f"/><path d="M12 10v4M6 8l12 10"/>',
+};
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const STYLES = { satellite:"mapbox://styles/mapbox/satellite-streets-v12", terrain:"mapbox://styles/mapbox/outdoors-v12" };
 
@@ -831,7 +843,8 @@ function startReplay(e){
   const trim=p=>{ const v=[Math.min(.99999,Math.max(0,p)),1]; map.setPaintProperty("trail-line","line-trim-offset",v); map.setPaintProperty("trail-glow","line-trim-offset",v); };
   trim(0); map.setLayoutProperty("trail-line","visibility","visible"); map.setLayoutProperty("trail-glow","visibility","visible");
   const prevEx=1.35; map.setTerrain({source:"dem",exaggeration:1.5});
-  const headEl=document.createElement("div"); headEl.className="rphead";
+  const headEl=document.createElement("div"); const fig=REPLAY_FIGS[e.kind];
+  headEl.className="rphead"+(fig?" fig":""); if(fig) headEl.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${fig}</svg>`;
   const dot=new mapboxgl.Marker({element:headEl}).setLngLat(ll(route[0])).addTo(map);
   const lock=["dragPan","scrollZoom","doubleClickZoom","boxZoom","keyboard","touchZoomRotate","dragRotate","touchPitch"];
   lock.forEach(h=>map[h]&&map[h].disable());
