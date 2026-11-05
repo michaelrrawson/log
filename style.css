@@ -130,17 +130,20 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .bhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:8px}
 .notes{white-space:pre-wrap;max-width:68ch;font-size:15px;line-height:1.65;margin:0}
 .notes.empty{color:var(--muted)}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
-.ph{position:relative;margin:0;aspect-ratio:1;background:var(--tile);overflow:hidden}
-.ph img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;transition:transform .35s ease}
+.gallery{display:flex;flex-wrap:wrap;gap:14px}
+.gallery>.ph{--ar:1.333;flex:var(--ar) 1 calc(var(--ar) * 240px);aspect-ratio:var(--ar);margin:0}
+.gallery::after{content:"";flex:999 1 0}
+.gallery>.drop{flex:1 1 200px}
+.ph{position:relative;background:var(--tile);overflow:hidden}
+.ph img,.ph video{width:100%;height:100%;object-fit:contain;display:block}
+.ph img{cursor:zoom-in;transition:transform .35s ease}
+.ph video{background:#000}
 .ph:hover img{transform:scale(1.03)}
 .ph .x{position:absolute;top:8px;right:8px;background:var(--bg);padding:3px 7px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;opacity:0;transition:opacity .2s}
 .ph:hover .x,.ph .x:focus-visible,.ph .x.armed{opacity:1}
 .ph .x.armed{color:var(--danger)}
 @media (hover:none){.ph .x{opacity:1}}
-.ph .play{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(0,0,0,.55);pointer-events:none}
-.ph .play::after{content:"";position:absolute;left:18px;top:14px;border-style:solid;border-width:9px 0 9px 14px;border-color:transparent transparent transparent #fff}
-.drop{aspect-ratio:1;border:1px dashed var(--line);display:grid;place-content:center;gap:6px;text-align:center;color:var(--muted);padding:12px;width:100%}
+.drop{min-height:140px;border:1px dashed var(--line);display:grid;place-content:center;gap:6px;text-align:center;color:var(--muted);padding:12px;width:100%}
 .drop strong{color:var(--fg);font-weight:600}
 .drop:hover,.drop.over{border-color:var(--fg)}
 .status{font-family:var(--mono);font-size:12px;color:var(--muted);min-height:1.2em;margin:0}

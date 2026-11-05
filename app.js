@@ -377,18 +377,21 @@ function renderSheet(){
       <div><dt class="label">Share</dt><dd><button type="button" id="shareBtn">Copy link</button></dd></div>
     </dl>
     ${e.peaks.length?`<div class="block"><div class="bhead label"><span>Summits</span><span class="mono">${e.peaks.length}</span></div><ul class="peaklist">${e.peaks.map(p=>`<li><span>${esc(p.name)}</span><span class="mono">${elevTxt(p)}</span></li>`).join("")}</ul></div>`:""}
+    <div class="block"><div class="bhead label"><span>Photos</span><span class="mono">${e.photos.length}</span></div>
+      ${e.photos.length||canEdit?`<div class="gallery" id="gallery">${e.photos.map((p,i)=>`<figure class="ph${p.type==="video"?" vid":""}">${p.type==="video"?`<video controls playsinline preload="metadata" src="${esc(photoUrl(p))}"${p.poster?` poster="${esc(photoUrl({path:p.poster}))}"`:""} aria-label="${esc(p.name||`Video ${i+1} from ${e.title}`)}"></video>`:`<img src="${esc(photoUrl(p))}" alt="${esc(p.name||`Photo ${i+1} from ${e.title}`)}" loading="lazy">`}${canEdit?`<button class="x" type="button" data-del="${i}">Remove</button>`:""}</figure>`).join("")}${canEdit?`<button class="drop" id="drop" type="button"><strong>Add photos</strong><span>Click or drop images</span></button>`:""}</div>`:`<p class="notes empty">No photos.</p>`}
+      <input type="file" id="fileIn" accept="image/*" multiple hidden><p class="status" id="upStatus"></p></div>
     ${e.gear.length||canEdit?`<div class="block"><div class="bhead label"><span>Gear</span><span class="mono">${e.gear.length}</span></div>${e.gear.length?`<ul class="gear">${e.gear.map(g=>`<li><button type="button" class="gearq" data-g="${esc(g)}" title="Show every entry with this">${esc(g)}</button></li>`).join("")}</ul>`:`<p class="notes empty">No gear listed. Choose Edit to add some.</p>`}</div>`:""}
     <div class="block"><div class="bhead label"><span>Notes</span></div><p class="notes${e.notes?"":" empty"}">${e.notes?esc(e.notes):(canEdit?"No notes yet. Choose Edit to add some.":"No notes.")}</p></div>
-    <div class="block"><div class="bhead label"><span>Photos</span><span class="mono">${e.photos.length}</span></div>
-      ${e.photos.length||canEdit?`<div class="gallery" id="gallery">${e.photos.map((p,i)=>`<figure class="ph${p.type==="video"?" vid":""}">${p.type==="video"?`<img src="${esc(p.poster?photoUrl({path:p.poster}):"")}" data-video="${esc(photoUrl(p))}" alt="${esc(p.name||`Video ${i+1} from ${e.title}`)}" loading="lazy"><span class="play" aria-hidden="true"></span>`:`<img src="${esc(photoUrl(p))}" alt="${esc(p.name||`Photo ${i+1} from ${e.title}`)}" loading="lazy">`}${canEdit?`<button class="x" type="button" data-del="${i}">Remove</button>`:""}</figure>`).join("")}${canEdit?`<button class="drop" id="drop" type="button"><strong>Add photos</strong><span>Click or drop images</span></button>`:""}</div>`:`<p class="notes empty">No photos.</p>`}
-      <input type="file" id="fileIn" accept="image/*" multiple hidden><p class="status" id="upStatus"></p></div>
     ${canEdit?`<div class="acts"><button class="btn solid label" id="editBtn" type="button">Edit</button><span class="sp"></span><span id="delWrap"><button class="del label" id="delBtn" type="button">Delete entry</button></span></div>`:""}`;
   const q=s=>box.querySelector(s);
   q("#copyBtn").onclick=async()=>{ try{ await navigator.clipboard.writeText(q("#dec").textContent); q("#copyBtn").textContent="Copied"; }catch{ q("#copyBtn").textContent="Select and copy"; } };
   if(q("#playLink")) q("#playLink").onclick=()=>startReplay(e);
   q("#shareBtn").onclick=ev=>share("e",e.id,e.title,fmtRange(e.start_date,e.end_date),ev.target);
   box.querySelectorAll(".gearq").forEach(b=>b.onclick=()=>{ $("#q").value=b.dataset.g; filt.q=b.dataset.g.toLowerCase(); select(null); afterFilter(); $(".ledger").scrollIntoView({block:"nearest"}); });
-  if(q("#gallery")) q("#gallery").addEventListener("click",ev=>{ const d=ev.target.closest("[data-del]"); if(d){ removePhoto(e,+d.dataset.del,d); return; } const img=ev.target.closest(".ph")?.querySelector("img"); if(img) lightbox(img.dataset.video||img.src,img.alt,!!img.dataset.video); });
+  // size each tile to its picture's shape so rows line up with nothing cropped
+  box.querySelectorAll(".ph img,.ph video").forEach(m=>{ const set=()=>{ const w=m.naturalWidth||m.videoWidth, h=m.naturalHeight||m.videoHeight; if(w&&h) m.closest(".ph").style.setProperty("--ar",(w/h).toFixed(3)); };
+    if(m.tagName==="VIDEO"){ if(m.readyState>=1) set(); else m.addEventListener("loadedmetadata",set,{once:true}); } else { if(m.complete) set(); else m.addEventListener("load",set,{once:true}); } });
+  if(q("#gallery")) q("#gallery").addEventListener("click",ev=>{ const d=ev.target.closest("[data-del]"); if(d){ removePhoto(e,+d.dataset.del,d); return; } const img=ev.target.closest("img"); if(img) lightbox(img.src,img.alt); });
   const drop=q("#drop");
   if(drop){ drop.onclick=()=>q("#fileIn").click(); q("#fileIn").onchange=ev=>uploadPhotos(e,[...ev.target.files]);
     drop.addEventListener("dragover",ev=>{ev.preventDefault();drop.classList.add("over");}); drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
