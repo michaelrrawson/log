@@ -66,6 +66,9 @@ const sb = (CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase) ? window.
   } }
 }) : null;
 let entries=[], trips=[], selected=null, selTrip=null, canEdit=false, source="";
+// Public reads go through a client that never touches sign-in, so the log always loads
+// even if the editor's auth session is stuck in another tab.
+const pub = sb ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth:{ persistSession:false, autoRefreshToken:false, detectSessionInUrl:false, storageKey:"sb-log-public" } }) : null;
 const photoUrl = p => sb ? sb.storage.from("photos").getPublicUrl(p.path).data.publicUrl : (p.url||"");
 function norm(r){ return {...r, lat:+r.lat, lng:+r.lng, route:validRoute(r.route), photos:Array.isArray(r.photos)?r.photos:[], gear:Array.isArray(r.gear)?r.gear.filter(g=>typeof g==="string"&&g.trim()).map(g=>g.trim()):[], stats:(r.stats&&typeof r.stats==="object")?r.stats:{}, peaks:normPeaks(r.peaks), trip_id:r.trip_id||null, notes:r.notes||"", place:r.place||"", kind:KINDS[r.kind]?r.kind:"other"}; }
 const normPeaks = a => (Array.isArray(a)?a:[]).filter(p=>p&&typeof p.name==="string"&&p.name.trim()).map(p=>({name:p.name.trim(),elev_m:isFinite(+p.elev_m)&&p.elev_m!==null&&p.elev_m!==""?+p.elev_m:null,...(isFinite(+p.lat)&&isFinite(+p.lng)&&p.lat!=null?{lat:+p.lat,lng:+p.lng}:{})}));
@@ -74,7 +77,7 @@ const TRIPS_ON = false;
 const normTrip = t => ({id:t.id,title:t.title||"Untitled trip",notes:t.notes||""});
 async function loadEntries(){
   if(sb){
-    const [a,b] = await Promise.all([sb.from("entries").select("*").order("start_date"), sb.from("trips").select("*")]);
+    const [a,b] = await Promise.all([pub.from("entries").select("*").order("start_date"), pub.from("trips").select("*")]);
     if(!a.error){ entries=a.data.map(norm); trips=(!TRIPS_ON||b.error?[]:b.data).map(normTrip); source="live"; return; }
     console.warn("Supabase unavailable, using backup", a.error);
   }
@@ -154,6 +157,7 @@ function initMap(){
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:true}),"top-right");
   map.addControl(new mapboxgl.ScaleControl({unit:"imperial"}),"bottom-left");
   map.on("style.load", setupStyle);
+  ["mousedown","touchstart","wheel"].forEach(ev=>map.on(ev,stopCam));  // let the person take over mid-glide
   map.on("error", e => { if(e && e.error && /401|403|token/i.test(String(e.error.message||e.error.status))){ $("#mapErr").hidden=false; $("#mapErr").textContent="Mapbox refused the token. If it's restricted, check that this site's address is on its URL list."; } });
 }
 function setupStyle(){
@@ -197,27 +201,47 @@ function drawMarkers(){
 }
 const isOn = e => e.id===selected || (!!selTrip && e.trip_id===selTrip);
 function boundsOf(pts){ const b=new mapboxgl.LngLatBounds(); pts.forEach(p=>b.extend(ll(p))); return b; }
-// Camera move to an entry. Nearby hops glide straight across (no zoom-out arc);
-// longer trips use a gentle arc. Timing scales with distance so short moves feel quick.
+// Camera move to an entry. Mapbox's own easeTo/flyTo re-aim at the ground under the screen
+// center every frame, which makes the camera bob over steep 3D terrain. Instead we capture the
+// start and end camera positions in the air and glide straight between them (with a small lift
+// for longer hops), so nothing follows the terrain mid-move.
 const easeIO = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+let camAnim=null;
+function stopCam(){ if(camAnim){ cancelAnimationFrame(camAnim.raf); camAnim=null; } }
+function slerp(a,b,t){
+  let d=a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]; if(d<0){ b=b.map(v=>-v); d=-d; }
+  if(d>0.9995){ const r=a.map((v,i)=>v+(b[i]-v)*t), n=Math.hypot(...r); return r.map(v=>v/n); }
+  const th=Math.acos(d), s0=Math.sin((1-t)*th)/Math.sin(th), s1=Math.sin(t*th)/Math.sin(th);
+  return a.map((v,i)=>v*s0+b[i]*s1);
+}
+function glideTo(cam){
+  stopCam();
+  const from=map.getFreeCameraOptions(), p0=from.position, q0=[...from.orientation];
+  map.jumpTo(cam); const to=map.getFreeCameraOptions(), p1=to.position, q1=[...to.orientation];
+  map.setFreeCameraOptions(from);
+  const d=Math.hypot(p1.x-p0.x,p1.y-p0.y), km=d*40075;
+  const dur = km<40 ? Math.min(2400, 1400 + km*25) : Math.min(4500, 2400 + Math.log10(1+km)*650);
+  const lift = km<40 ? d*0.12 : d*0.45;
+  const t0=performance.now(); camAnim={raf:0};
+  const step=now=>{
+    const t=Math.min(1,(now-t0)/dur), e=easeIO(t);
+    const pos=new mapboxgl.MercatorCoordinate(p0.x+(p1.x-p0.x)*e, p0.y+(p1.y-p0.y)*e, p0.z+(p1.z-p0.z)*e + lift*Math.sin(Math.PI*e));
+    const fc=new mapboxgl.FreeCameraOptions(pos, slerp(q0,q1,e)); map.setFreeCameraOptions(fc);
+    if(t<1 && camAnim) camAnim.raf=requestAnimationFrame(step); else camAnim=null;
+  };
+  camAnim.raf=requestAnimationFrame(step);
+}
 function flyTo(e){
   if(!map) return;
   const r=e.route;
   const cam = r.length>1
     ? {...(map.cameraForBounds(boundsOf(r),{padding:90,bearing:-20,pitch:58,maxZoom:13.5}) || {center:[e.lng,e.lat],zoom:12}),bearing:-20,pitch:58}
     : {center:[e.lng,e.lat],zoom:14.2,pitch:62,bearing:-25};
-  if(reduce){ map.jumpTo(cam); return; }
-  const from=map.getCenter(), to=mapboxgl.LngLat.convert(cam.center);
-  const km=from.distanceTo(to)/1000, dz=Math.abs(map.getZoom()-cam.zoom);
   map.stop();
-  if(km<40 && map.getZoom()>8){
-    // close by: one smooth glide, pan and zoom together
-    const dur=Math.min(2600, 1300 + km*35 + dz*180);
-    map.easeTo({...cam,duration:dur,easing:easeIO,essential:true});
-  } else {
-    const dur=Math.min(5200, 2600 + Math.log10(1+km)*700);
-    map.flyTo({...cam,duration:dur,curve:1.3,speed:0.9,easing:easeIO,essential:true});
-  }
+  if(reduce){ stopCam(); map.jumpTo(cam); return; }
+  // From far out (the globe view) the built-in flight still looks best
+  if(map.getZoom()<6){ stopCam(); map.flyTo({...cam,duration:4200,curve:1.4,easing:easeIO,essential:true}); return; }
+  glideTo(cam);
 }
 function fitAll(animate=true){ fitTo(shown().length?shown():entries,animate); }
 function fitTo(list,animate=true){
