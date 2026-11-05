@@ -188,13 +188,27 @@ function drawMarkers(){
 }
 const isOn = e => e.id===selected || (!!selTrip && e.trip_id===selTrip);
 function boundsOf(pts){ const b=new mapboxgl.LngLatBounds(); pts.forEach(p=>b.extend(ll(p))); return b; }
+// Camera move to an entry. Nearby hops glide straight across (no zoom-out arc);
+// longer trips use a gentle arc. Timing scales with distance so short moves feel quick.
+const easeIO = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
 function flyTo(e){
   if(!map) return;
-  const r=e.route, dur=reduce?0:4500;
-  if(r.length>1){
-    const cam = map.cameraForBounds(boundsOf(r),{padding:90,bearing:-20,pitch:58,maxZoom:13.5}) || {center:[e.lng,e.lat],zoom:12};
-    map.flyTo({...cam,bearing:-20,pitch:58,duration:dur,curve:1.6,essential:true});
-  } else map.flyTo({center:[e.lng,e.lat],zoom:14.2,pitch:62,bearing:-25,duration:dur,curve:1.6,essential:true});
+  const r=e.route;
+  const cam = r.length>1
+    ? {...(map.cameraForBounds(boundsOf(r),{padding:90,bearing:-20,pitch:58,maxZoom:13.5}) || {center:[e.lng,e.lat],zoom:12}),bearing:-20,pitch:58}
+    : {center:[e.lng,e.lat],zoom:14.2,pitch:62,bearing:-25};
+  if(reduce){ map.jumpTo(cam); return; }
+  const from=map.getCenter(), to=mapboxgl.LngLat.convert(cam.center);
+  const km=from.distanceTo(to)/1000, dz=Math.abs(map.getZoom()-cam.zoom);
+  map.stop();
+  if(km<40 && map.getZoom()>8){
+    // close by: one smooth glide, pan and zoom together
+    const dur=Math.min(2600, 1300 + km*35 + dz*180);
+    map.easeTo({...cam,duration:dur,easing:easeIO,essential:true});
+  } else {
+    const dur=Math.min(5200, 2600 + Math.log10(1+km)*700);
+    map.flyTo({...cam,duration:dur,curve:1.3,speed:0.9,easing:easeIO,essential:true});
+  }
 }
 function fitAll(animate=true){ fitTo(shown().length?shown():entries,animate); }
 function fitTo(list,animate=true){
@@ -357,7 +371,7 @@ function renderSheet(){
     ${e.gear.length||canEdit?`<div class="block"><div class="bhead label"><span>Gear</span><span class="mono">${e.gear.length}</span></div>${e.gear.length?`<ul class="gear">${e.gear.map(g=>`<li><button type="button" class="gearq" data-g="${esc(g)}" title="Show every entry with this">${esc(g)}</button></li>`).join("")}</ul>`:`<p class="notes empty">No gear listed. Choose Edit to add some.</p>`}</div>`:""}
     <div class="block"><div class="bhead label"><span>Notes</span></div><p class="notes${e.notes?"":" empty"}">${e.notes?esc(e.notes):(canEdit?"No notes yet. Choose Edit to add some.":"No notes.")}</p></div>
     <div class="block"><div class="bhead label"><span>Photos</span><span class="mono">${e.photos.length}</span></div>
-      ${e.photos.length||canEdit?`<div class="gallery" id="gallery">${e.photos.map((p,i)=>`<figure class="ph"><img src="${esc(photoUrl(p))}" alt="${esc(p.name||`Photo ${i+1} from ${e.title}`)}" loading="lazy">${canEdit?`<button class="x" type="button" data-del="${i}">Remove</button>`:""}</figure>`).join("")}${canEdit?`<button class="drop" id="drop" type="button"><strong>Add photos</strong><span>Click or drop images</span></button>`:""}</div>`:`<p class="notes empty">No photos.</p>`}
+      ${e.photos.length||canEdit?`<div class="gallery" id="gallery">${e.photos.map((p,i)=>`<figure class="ph${p.type==="video"?" vid":""}">${p.type==="video"?`<img src="${esc(p.poster?photoUrl({path:p.poster}):"")}" data-video="${esc(photoUrl(p))}" alt="${esc(p.name||`Video ${i+1} from ${e.title}`)}" loading="lazy"><span class="play" aria-hidden="true"></span>`:`<img src="${esc(photoUrl(p))}" alt="${esc(p.name||`Photo ${i+1} from ${e.title}`)}" loading="lazy">`}${canEdit?`<button class="x" type="button" data-del="${i}">Remove</button>`:""}</figure>`).join("")}${canEdit?`<button class="drop" id="drop" type="button"><strong>Add photos</strong><span>Click or drop images</span></button>`:""}</div>`:`<p class="notes empty">No photos.</p>`}
       <input type="file" id="fileIn" accept="image/*" multiple hidden><p class="status" id="upStatus"></p></div>
     ${canEdit?`<div class="acts"><button class="btn solid label" id="editBtn" type="button">Edit</button><span class="sp"></span><span id="delWrap"><button class="del label" id="delBtn" type="button">Delete entry</button></span></div>`:""}`;
   const q=s=>box.querySelector(s);
@@ -365,7 +379,7 @@ function renderSheet(){
   if(q("#playLink")) q("#playLink").onclick=()=>startReplay(e);
   q("#shareBtn").onclick=ev=>share("e",e.id,e.title,fmtRange(e.start_date,e.end_date),ev.target);
   box.querySelectorAll(".gearq").forEach(b=>b.onclick=()=>{ $("#q").value=b.dataset.g; filt.q=b.dataset.g.toLowerCase(); select(null); afterFilter(); $(".ledger").scrollIntoView({block:"nearest"}); });
-  if(q("#gallery")) q("#gallery").addEventListener("click",ev=>{ const d=ev.target.closest("[data-del]"); if(d){ removePhoto(e,+d.dataset.del,d); return; } const img=ev.target.closest("img"); if(img) lightbox(img.src,img.alt); });
+  if(q("#gallery")) q("#gallery").addEventListener("click",ev=>{ const d=ev.target.closest("[data-del]"); if(d){ removePhoto(e,+d.dataset.del,d); return; } const img=ev.target.closest(".ph")?.querySelector("img"); if(img) lightbox(img.dataset.video||img.src,img.alt,!!img.dataset.video); });
   const drop=q("#drop");
   if(drop){ drop.onclick=()=>q("#fileIn").click(); q("#fileIn").onchange=ev=>uploadPhotos(e,[...ev.target.files]);
     drop.addEventListener("dragover",ev=>{ev.preventDefault();drop.classList.add("over");}); drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
@@ -629,9 +643,9 @@ async function removePhoto(e,i,btn){
   if(error){ setStatus("Couldn't remove that photo: "+error.message,true); return; }
   if(gone) await sb.storage.from("photos").remove([gone.path]); refresh(true);
 }
-function lightbox(src,alt){
-  const lb=document.createElement("div"); lb.className="lightbox"; lb.innerHTML=`<img alt=""><button type="button" aria-label="Close">×</button>`;
-  lb.querySelector("img").src=src; lb.querySelector("img").alt=alt;
+function lightbox(src,alt,isVideo){
+  const lb=document.createElement("div"); lb.className="lightbox"; lb.innerHTML=`${isVideo?`<video controls autoplay playsinline></video>`:`<img alt="">`}<button type="button" aria-label="Close">×</button>`;
+  const m=lb.querySelector(isVideo?"video":"img"); m.src=src; if(isVideo) m.setAttribute("aria-label",alt); else m.alt=alt;
   const close=()=>{ lb.remove(); document.removeEventListener("keydown",k); }; const k=ev=>{ if(ev.key==="Escape") close(); };
   lb.addEventListener("click",ev=>{ if(ev.target===lb||ev.target.tagName==="BUTTON") close(); }); document.addEventListener("keydown",k); document.body.appendChild(lb);
 }
