@@ -9,8 +9,10 @@
   // Outfits for the figure. Pick one with replayOutfit in config.js.
   const OUTFITS = {
     classic: { top:ACCENT, pants:0x23262c, shoe:0x121212, skin:0xf0c6a2, hood:false, tie:null, helmet:true },
-    // Black hoodie with the hood up and a loose tie, after Bob Dylan's Vatican visit with Pope Leo (Nov 2026)
-    dylan:   { top:0x1b1c1f, pants:0x34363b, shoe:0x0e0e0e, skin:0xf0c6a2, hood:true, tie:0x8e9196, helmet:false },
+    // After Bob Dylan's Vatican visit with Pope Leo (Nov 2026): dark coat over a black hoodie with the hood up,
+    // black cap under the hood, loosely knotted polka-dot tie, black leather gloves, hook-handled umbrella for a walking stick
+    dylan:   { top:0x26272b, hoodie:0x0d0d0f, pants:0x2c2d31, shoe:0x0e0e0e, skin:0xf0c6a2, hood:true, cap:true,
+               tie:0x2a3550, dots:0xe9e6dc, gloves:0x0b0b0c, umbrella:true, helmet:false },
   };
   const outfit = () => OUTFITS[(window.LOG_CONFIG||{}).replayOutfit] || OUTFITS.classic;
   let loading = null;
@@ -39,19 +41,29 @@
       const head=mesh(new T.SphereGeometry(.115,14,10), M.skin); head.position.y=.72; torso.add(head);
       const H = { root, pelvis, torso, head };
       if(O.hood){ // hood up: a shell around the head, open at the face (+Z)
-        const open=.82, hood=mesh(new T.SphereGeometry(.145,16,12, Math.PI/2+open, Math.PI*2-2*open, 0, Math.PI*.66), new T.MeshLambertMaterial({ color:O.top, side:T.DoubleSide }));
+        const open=.82, hood=mesh(new T.SphereGeometry(.145,16,12, Math.PI/2+open, Math.PI*2-2*open, 0, Math.PI*.66), new T.MeshPhongMaterial({ color:O.hoodie??O.top, side:T.DoubleSide, shininess:4 }));
         hood.position.set(0,.012,-.012); head.add(hood);
-        const drape=mesh(new T.CapsuleGeometry(.07,.06,4,8), M.shirt); drape.rotation.x=Math.PI/2; drape.position.set(0,.6,-.09); torso.add(drape);
+        if(O.cap){ const brim=mesh(new T.CylinderGeometry(.075,.075,.012,16,1,false,-Math.PI/2,Math.PI), mat(0x0a0a0b));
+          brim.scale.set(1,1,1.25); brim.position.set(0,.06,.1); brim.rotation.x=.18; head.add(brim);  // cap brim peeking out of the hood
+          const crown=mesh(new T.SphereGeometry(.12,14,8,0,Math.PI*2,0,Math.PI*.3), mat(0x0a0a0b)); crown.position.y=.03; head.add(crown); }
+        // black hoodie front showing between the coat lapels
+        const bib=mesh(new T.BoxGeometry(.14,.2,.01), mat(O.hoodie??O.top)); bib.position.set(0,.47,.112); torso.add(bib);
+        const drape=mesh(new T.CapsuleGeometry(.07,.06,4,8), mat(O.hoodie??O.top)); drape.rotation.x=Math.PI/2; drape.position.set(0,.6,-.09); torso.add(drape);
       }
       if(O.tie!=null){ // a loosened tie: knot pulled down below an open collar, blade hanging a little askew
-        const tieM=mat(O.tie), collar=mesh(new T.BoxGeometry(.1,.035,.01), mat(0xeeeeea)); collar.position.set(0,.585,.118); torso.add(collar);
+        let tieM=mat(O.tie);
+        if(O.dots!=null){ const cv=document.createElement("canvas"); cv.width=32; cv.height=128; const g=cv.getContext("2d");
+          g.fillStyle="#"+O.tie.toString(16).padStart(6,"0"); g.fillRect(0,0,32,128); g.fillStyle="#"+O.dots.toString(16).padStart(6,"0");
+          for(let y=6,r=0;y<128;y+=12,r++) for(let x=(r%2?4:10);x<32;x+=12){ g.beginPath(); g.arc(x,y,2.6,0,7); g.fill(); }
+          const tx=new T.CanvasTexture(cv); tx.magFilter=T.NearestFilter; tieM=new T.MeshLambertMaterial({ map:tx }); }
+        const collar=mesh(new T.BoxGeometry(.1,.035,.01), mat(0xeeeeea)); collar.position.set(0,.585,.118); torso.add(collar);
         const knot=mesh(new T.BoxGeometry(.045,.045,.025), tieM); knot.position.set(.004,.545,.124); knot.rotation.z=.15; torso.add(knot);
         const blade=mesh(new T.BoxGeometry(.055,.25,.012), tieM); blade.position.set(.018,.4,.126); blade.rotation.set(-.08,0,.1); torso.add(blade);
       }
       for(const [side,x] of [["l",.21],["r",-.21]]){
         const arm=limb(.3,.05,M.shirt); arm.position.set(x,.56,0); torso.add(arm);
         const fore=limb(.28,.045,O.hood?M.shirt:M.skin); fore.position.y=-.3; arm.add(fore);
-        if(O.hood){ const hand=mesh(new T.SphereGeometry(.048,10,8), M.skin); hand.position.y=-.29; fore.add(hand); } // long sleeves
+        if(O.hood){ const hand=mesh(new T.SphereGeometry(.048,10,8), O.gloves!=null?new T.MeshPhongMaterial({ color:O.gloves, shininess:60, specular:0x555555 }):M.skin); hand.position.y=-.29; fore.add(hand); } // long sleeves
         H[side+"Arm"]=arm; H[side+"Fore"]=fore;
         if(legs){
           const thigh=limb(.45,.07,M.pants); thigh.position.set(x*.5,0,0); pelvis.add(thigh);
@@ -75,7 +87,13 @@
       const H=human(); root.add(H.root);
       const run = type==="runner";
       const legAmp = run?.75:.38, armAmp = run?.7:.32, lean = run?.2:.08, cadence = run?2.6:1.7;
-      if(!run){ // trekking pole in the right hand
+      if(!run && O.umbrella){ // a furled black umbrella with a hook handle, used as a walking stick
+        const u=new T.Group(); u.position.y=-.29; H.rFore.add(u); const blk=mat(0x0c0c0d), tip=[0,-1.0,.12];
+        u.add(tube([0,.06,0],tip,.01,M.metal));
+        const furl=mesh(new T.ConeGeometry(.045,.62,10), blk); furl.position.set(0,-.62,.074);
+        furl.quaternion.setFromUnitVectors(new T.Vector3(0,-1,0), new T.Vector3(...tip).normalize()); u.add(furl);
+        const hook=mesh(new T.TorusGeometry(.055,.014,6,14,Math.PI), mat(0x3b2a1e)); hook.position.set(0,.06,-.055); hook.rotation.y=Math.PI/2; u.add(hook);
+      } else if(!run){ // trekking pole in the right hand
         const pole=tube([0,0,0],[0,-1.05,.12],.012,M.metal); pole.position.y=-.26; H.rFore.add(pole);
       }
       if(type==="backpacker"){ const pack=mesh(new T.BoxGeometry(.36,.52,.22), M.pack); pack.position.set(0,.36,-.21); H.torso.add(pack);
