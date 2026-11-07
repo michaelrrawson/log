@@ -6,6 +6,13 @@
   const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js";
   const KINDS = { hike:"hiker", climb:"hiker", backpacking:"backpacker", trailrun:"runner", bike:"cyclist", mtb:"cyclist", ski:"skier", water:"paddler" };
   const ACCENT = 0x2f9bff, SCREEN_PX = 46; // figure height on screen, in pixels
+  // Outfits for the figure. Pick one with replayOutfit in config.js.
+  const OUTFITS = {
+    classic: { top:ACCENT, pants:0x23262c, shoe:0x121212, skin:0xf0c6a2, hood:false, tie:null, helmet:true },
+    // Black hoodie with the hood up and a loose tie, after Bob Dylan's Vatican visit with Pope Leo (Nov 2026)
+    dylan:   { top:0x1b1c1f, pants:0x34363b, shoe:0x0e0e0e, skin:0xf0c6a2, hood:true, tie:0x8e9196, helmet:false },
+  };
+  const outfit = () => OUTFITS[(window.LOG_CONFIG||{}).replayOutfit] || OUTFITS.classic;
   let loading = null;
 
   function load(){
@@ -17,7 +24,8 @@
   function build(type){
     const T = window.THREE;
     const mat = c => new T.MeshLambertMaterial({ color:c });
-    const M = { skin:mat(0xf0c6a2), shirt:mat(ACCENT), pants:mat(0x23262c), shoe:mat(0x121212), dark:mat(0x1b1d21), tire:mat(0x0c0c0c), metal:mat(0xa7adb3), pack:mat(0x44525f), helmet:mat(0xf4f4f4) };
+    const O = outfit();
+    const M = { skin:mat(O.skin), shirt:mat(O.top), accent:mat(ACCENT), pants:mat(O.pants), shoe:mat(O.shoe), dark:mat(0x1b1d21), tire:mat(0x0c0c0c), metal:mat(0xa7adb3), pack:mat(0x44525f), helmet:mat(0xf4f4f4) };
     const mesh = (g,m) => new T.Mesh(g,m);
     // a limb hanging down from a pivot: rotation.x < 0 swings it forward
     const limb = (len, r, m) => { const p=new T.Group(), c=mesh(new T.CapsuleGeometry(r, Math.max(.01,len-2*r), 4, 8), m); c.position.y=-len/2; p.add(c); p.len=len; return p; };
@@ -30,9 +38,20 @@
       const body=mesh(new T.CapsuleGeometry(.15,.3,4,10), M.shirt); body.position.y=.3; body.scale.set(1.15,1,.8); torso.add(body);
       const head=mesh(new T.SphereGeometry(.115,14,10), M.skin); head.position.y=.72; torso.add(head);
       const H = { root, pelvis, torso, head };
+      if(O.hood){ // hood up: a shell around the head, open at the face (+Z)
+        const open=.82, hood=mesh(new T.SphereGeometry(.145,16,12, Math.PI/2+open, Math.PI*2-2*open, 0, Math.PI*.66), new T.MeshLambertMaterial({ color:O.top, side:T.DoubleSide }));
+        hood.position.set(0,.012,-.012); head.add(hood);
+        const drape=mesh(new T.CapsuleGeometry(.07,.06,4,8), M.shirt); drape.rotation.x=Math.PI/2; drape.position.set(0,.6,-.09); torso.add(drape);
+      }
+      if(O.tie!=null){ // a loosened tie: knot pulled down below an open collar, blade hanging a little askew
+        const tieM=mat(O.tie), collar=mesh(new T.BoxGeometry(.1,.035,.01), mat(0xeeeeea)); collar.position.set(0,.585,.118); torso.add(collar);
+        const knot=mesh(new T.BoxGeometry(.045,.045,.025), tieM); knot.position.set(.004,.545,.124); knot.rotation.z=.15; torso.add(knot);
+        const blade=mesh(new T.BoxGeometry(.055,.25,.012), tieM); blade.position.set(.018,.4,.126); blade.rotation.set(-.08,0,.1); torso.add(blade);
+      }
       for(const [side,x] of [["l",.21],["r",-.21]]){
         const arm=limb(.3,.05,M.shirt); arm.position.set(x,.56,0); torso.add(arm);
-        const fore=limb(.28,.045,M.skin); fore.position.y=-.3; arm.add(fore);
+        const fore=limb(.28,.045,O.hood?M.shirt:M.skin); fore.position.y=-.3; arm.add(fore);
+        if(O.hood){ const hand=mesh(new T.SphereGeometry(.048,10,8), M.skin); hand.position.y=-.29; fore.add(hand); } // long sleeves
         H[side+"Arm"]=arm; H[side+"Fore"]=fore;
         if(legs){
           const thigh=limb(.45,.07,M.pants); thigh.position.set(x*.5,0,0); pelvis.add(thigh);
@@ -60,7 +79,7 @@
         const pole=tube([0,0,0],[0,-1.05,.12],.012,M.metal); pole.position.y=-.26; H.rFore.add(pole);
       }
       if(type==="backpacker"){ const pack=mesh(new T.BoxGeometry(.36,.52,.22), M.pack); pack.position.set(0,.36,-.21); H.torso.add(pack);
-        const roll=mesh(new T.CylinderGeometry(.08,.08,.38,10), M.shirt); roll.rotation.z=Math.PI/2; roll.position.set(0,.66,-.21); H.torso.add(roll); }
+        const roll=mesh(new T.CylinderGeometry(.08,.08,.38,10), M.accent); roll.rotation.z=Math.PI/2; roll.position.set(0,.66,-.21); H.torso.add(roll); }
       H.torso.rotation.x = lean;
       let p=0;
       tick=(dt,m)=>{ p += dt*cadence*2*Math.PI*Math.min(1.6,m); const s=Math.sin(p), c=Math.cos(p), w=Math.min(1,m*1.5);
@@ -94,14 +113,14 @@
         for(let i=0;i<4;i++){ const sp=tube([0,0,0],[0,R-.05,0],.006,M.metal); sp.rotation.z=i*Math.PI/2; g.add(sp); }
         g.rotation.y=Math.PI/2; bike.add(g); return g; };
       const wr=wheel(rear[2]), wf=wheel(front[2]);
-      const fm=M.shirt; // frame in the accent color
+      const fm=M.accent; // frame in the accent color
       bike.add(tube(rear,bb,.025,fm), tube(bb,seat,.028,fm), tube(seat,[0,.93,.36],.028,fm), tube([0,.93,.36],bb,.03,fm), tube(rear,seat,.02,fm), tube([0,.93,.36],front,.025,fm));
       bike.add(tube([0,.92,.36],bar,.022,M.dark), tube([-.22,1.0,.44],[.22,1.0,.44],.018,M.dark));
       const saddle=mesh(new T.BoxGeometry(.1,.04,.24), M.dark); saddle.position.set(0,.95,-.2); bike.add(saddle);
       const crank=new T.Group(); crank.position.set(...bb); bike.add(crank);
       const CL=.17; crank.add(tube([.07,0,0],[.07,-CL,0],.015,M.dark), tube([-.07,0,0],[-.07,CL,0],.015,M.dark));
       const H=human(); bike.add(H.root); H.pelvis.position.set(0,.98,-.2); H.torso.rotation.x=.95;
-      const helmet=mesh(new T.SphereGeometry(.13,14,8,0,Math.PI*2,0,Math.PI/2), M.helmet); helmet.position.y=.74; H.torso.add(helmet);
+      if(O.helmet && !O.hood){ const helmet=mesh(new T.SphereGeometry(.13,14,8,0,Math.PI*2,0,Math.PI/2), M.helmet); helmet.position.y=.74; H.torso.add(helmet); }
       H.lArm.rotation.x = H.rArm.rotation.x = -.62; H.lFore.rotation.x = H.rFore.rotation.x = -.25;
       H.head.position.z=.05;
       let a=0;
@@ -115,7 +134,7 @@
       };
     }
     else if(type==="paddler"){
-      const kayak=mesh(new T.SphereGeometry(1,20,12), M.shirt); kayak.scale.set(.32,.16,2.2); kayak.position.y=.12; root.add(kayak);
+      const kayak=mesh(new T.SphereGeometry(1,20,12), M.accent); kayak.scale.set(.32,.16,2.2); kayak.position.y=.12; root.add(kayak);
       const H=human({legs:false}); root.add(H.root); H.pelvis.position.y=.14;
       const paddle=new T.Group(); paddle.position.set(0,.62,.28); H.torso.add(paddle);
       paddle.add(tube([-1.05,0,0],[1.05,0,0],.016,M.dark));
