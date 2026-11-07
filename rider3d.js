@@ -43,8 +43,8 @@
       if(O.hood){ // hood up: a shell around the head, open at the face (+Z)
         const open=.82, hood=mesh(new T.SphereGeometry(.145,16,12, Math.PI/2+open, Math.PI*2-2*open, 0, Math.PI*.66), new T.MeshPhongMaterial({ color:O.hoodie??O.top, side:T.DoubleSide, shininess:4 }));
         hood.position.set(0,.012,-.012); head.add(hood);
-        if(O.cap){ const brim=mesh(new T.CylinderGeometry(.075,.075,.012,16,1,false,-Math.PI/2,Math.PI), mat(0x0a0a0b));
-          brim.scale.set(1,1,1.25); brim.position.set(0,.06,.1); brim.rotation.x=.18; head.add(brim);  // cap brim peeking out of the hood
+        if(O.cap){ const brim=mesh(new T.CylinderGeometry(.07,.07,.008,16,1,false,-Math.PI/2,Math.PI), mat(0x0a0a0b));
+          brim.scale.set(1,1,1.1); brim.position.set(0,.098,.07); brim.rotation.x=-.12; head.add(brim);  // cap brim peeking out of the hood
           const crown=mesh(new T.SphereGeometry(.12,14,8,0,Math.PI*2,0,Math.PI*.3), mat(0x0a0a0b)); crown.position.y=.03; head.add(crown); }
         // black hoodie front showing between the coat lapels
         const bib=mesh(new T.BoxGeometry(.14,.2,.01), mat(O.hoodie??O.top)); bib.position.set(0,.47,.112); torso.add(bib);
