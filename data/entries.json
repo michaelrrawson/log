@@ -237,7 +237,13 @@
     "notes": "I almost threw up",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 3372,
+      "moving_s": 2098,
+      "strava_id": 14385893081,
+      "vertical_m": 223
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -571,7 +577,13 @@
     "notes": "A merry riverside foray, rope swing, river water 7/10 taste 9/10 temperature, left ankle sore, steady incline, ~8 log bridges, and a sublime descent",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 6021,
+      "moving_s": 3063,
+      "strava_id": 14397035525,
+      "vertical_m": 334
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -797,7 +809,13 @@
     "notes": "This one is for da Pope- Definitely some fatigue, took too many breaks, my endurance sucks, trail had more elevation than I remembered, left ankle felt good, too hot!!! I need a vest. Lovely day",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 4851,
+      "moving_s": 1517,
+      "strava_id": 14418036561,
+      "vertical_m": 121
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -1179,7 +1197,13 @@
     "notes": "Way prettier & way steeper than I remembered! Left my trail shoes in Provo so I had to run in Blake’s old basketball shoes. Saw several people wearing hoodies on the way up? Lovely day, super fun descent",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 5671,
+      "moving_s": 2744,
+      "strava_id": 14457103023,
+      "vertical_m": 399
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -1297,7 +1321,13 @@
     "notes": "Shorter recovery run, camped near the base the night before, almost no break time. 👽🎃🫂👁️👨‍🌾🧎🥽",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 2446,
+      "moving_s": 931,
+      "strava_id": 14466937567,
+      "vertical_m": 165
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -1603,7 +1633,13 @@
     "notes": "So fun I camped near the base night before but was an idiot and put on my down jacket instead of my rain jacket and got soaked while setting up my tent!! What was I thinking. The run was so fun temp so good joints felt good 6:06 minute mile 3 and pretty views. I forgot to drink from the river",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 5789,
+      "moving_s": 1930,
+      "strava_id": 14490044841,
+      "vertical_m": 238
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -2661,7 +2697,13 @@
     "notes": "Said hi to windridge and kaysville theater and endeavour and my old neighborhood and bowman’s and Lake Fiesta and the old car wash we used to torment and took some round-a-bout loops. I ❤️ Kaysville",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 23885,
+      "moving_s": 4584,
+      "strava_id": 14515283603,
+      "vertical_m": 211
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -3071,7 +3113,13 @@
     "notes": "[strava://athletes/152648498/12]Blake Rawson kicked my trash \n\nRunning right after dinner=bad idea",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 7339,
+      "moving_s": 3176,
+      "strava_id": 14719458331,
+      "vertical_m": 373
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -3309,7 +3357,13 @@
     "notes": "Steps on the way up, slept on top of Mt Keelung, bushwhacking in morning to East Mt Keelung, Insane trail down Warrior Rock. Mandatory rope assistance down most of the trail. \n\nI met Mr Liu on the way down from Warrior Rock at 5:45 am. He is helps maintains the trails for fun and climbs Warrior Rock 5x a week. He invited me in for sweet milk and let me take a shower. He was too fast for me on the trail",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 4113,
+      "moving_s": 5470,
+      "strava_id": 14984442021,
+      "vertical_m": 414
+    },
     "trip_id": "taiwan-2025",
     "peaks": [
       {
@@ -3484,7 +3538,13 @@
     "notes": "I prefer dirt trails to the steps here but the views + temple are cool!",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 2591,
+      "moving_s": 2453,
+      "strava_id": 14984441984,
+      "vertical_m": 238
+    },
     "trip_id": "taiwan-2025",
     "peaks": [
       {
@@ -5037,7 +5097,13 @@
     "notes": "Bike ride through Taiwanese farmland, stop at Buddhist temple, ran into military squadron, indigenous festival, river and waterfall swimming, outdoor cat neutering stop that gave us water, Liyu Lake, Dongdamen night market",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 49064,
+      "moving_s": 23590,
+      "strava_id": 15106677811,
+      "vertical_m": 812
+    },
     "trip_id": "taiwan-2025",
     "peaks": []
   },
@@ -5223,7 +5289,13 @@
     "notes": "Hike #2 with [strava://athletes/11557878/12]Beck Seamons \n\nHiked in the dark as we shared our thoughts on the reality of the occult 🧙‍♂️🕴️\n\nCrawfish were cool! Fruit popsicle was good! Lava burger 👎 No dogs tried to bite us! \n\nTook a nice swim in Wanggu don’t tell the 政府",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 2823,
+      "moving_s": 2886,
+      "strava_id": 15146381568,
+      "vertical_m": 122
+    },
     "trip_id": "taiwan-2025",
     "peaks": []
   },
@@ -5425,7 +5497,13 @@
     "notes": "With [strava://athletes/11557878/12]Beck Seamons this was awesome and so humid\n\nXiaozishan to Cimushan to Putuoshan",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 2473,
+      "moving_s": 3495,
+      "strava_id": 15142396924,
+      "vertical_m": 303
+    },
     "trip_id": "taiwan-2025",
     "peaks": [
       {
@@ -5754,7 +5832,13 @@
     "notes": "Fun!\n\nElevation gain 死了",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 5145,
+      "moving_s": 7161,
+      "strava_id": 15197722289,
+      "vertical_m": 698
+    },
     "trip_id": "taiwan-2025",
     "peaks": [
       {
@@ -7269,7 +7353,13 @@
     "notes": "Wrong bus stop -> Zhuzihu-> Xiaomenkeng-> Qixing Mountain-> Lengshuikeng-> 7-11-> Kawayu Bathhouse\n\nLongest run in a while. Ran few miles up to Zhuzihu before going through a forest up to the peak of Qixing. Dark by the time I got to the top. Ran down and found the nearest 7-11, finished the night with a Japanese style bathhouse a few miles away. Very rainy and foggy weather. Very cool trails and the misty weather left either a magical or insidious atmosphere. Switchbacks do not exist in Taiwan, only staircases straight up the rock. This was so cool!",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 25913,
+      "moving_s": 12789,
+      "strava_id": 15212005062,
+      "vertical_m": 991
+    },
     "trip_id": "taiwan-2025",
     "peaks": [
       {
@@ -7708,7 +7798,13 @@
     "notes": "Took a gondola up to Maokong. Took a wrong turn somewhere and fought through a fierce forest trail! A spider made us find a new trail and we saw an insect get stuck in the web. [strava://athletes/11557878/12]Beck Seamons got a bloodsucking leech! And we got to a Buddhist temple built into a cave under a waterfall!",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 5810,
+      "moving_s": 6937,
+      "strava_id": 15273904112,
+      "vertical_m": 356
+    },
     "trip_id": "taiwan-2025",
     "peaks": [
       {
@@ -8311,7 +8407,13 @@
     "notes": "Fever dream. I was a bit gassed. There are 4 different spots marked as “Victorias Peak” on google maps. Saw a pig family. Slept under an overpass",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 8496,
+      "moving_s": 4544,
+      "strava_id": 15320768610,
+      "vertical_m": 338
+    },
     "trip_id": "taiwan-2025",
     "peaks": []
   },
@@ -9509,7 +9611,13 @@
     "notes": "Trekked up the road a few miles as I (unsuccessfully) attempted to hitch hike. Up the trail past Shek Pik Reservoir to a foggy Tian Ta (Big Buddha), backtrack for a serendipitous dip in Fung Pik Stream (haha see what I dip there), and down the Ngong Ping Rescue trail, aka the Frictionless Stairs of Death trail, and out to the MTR station in Tung Chung. \n\nSaw the biggest spiders I’ve ever seen, met a backpacking group who’d been out for 15 days, literally fell down a flight of stairs on the frictionless wooden stairs of death trail but managed to hold myself up on either handrail as I slid and kind of skied down the steps? Idk. Apologies to all the spiders whom webs I walked through. Maybe my favorite creek swim ever. The Indian kids playing soccer on my walk out were listening to Iggy Azalea \n\nVery fun hike! HK is Swag死了",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 24964,
+      "moving_s": 19515,
+      "strava_id": 15333261717,
+      "vertical_m": 960
+    },
     "trip_id": "taiwan-2025",
     "peaks": []
   },
@@ -9919,7 +10027,13 @@
     "notes": "Hot 死了",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 6884,
+      "moving_s": 7216,
+      "strava_id": 15396228460,
+      "vertical_m": 541
+    },
     "trip_id": "taiwan-2025",
     "peaks": [
       {
@@ -10234,7 +10348,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 4600,
+      "moving_s": 6657,
+      "strava_id": 15419466424,
+      "vertical_m": 435
+    },
     "trip_id": "taiwan-2025",
     "peaks": []
   },
@@ -10504,7 +10624,13 @@
     "notes": "大鬼瀑布. Best slurpee of my life. May have involved some gray area legality bushwhacking around excavation crew. I don’t want to leave",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 4198,
+      "moving_s": 5518,
+      "strava_id": 15457208190,
+      "vertical_m": 135
+    },
     "trip_id": "taiwan-2025",
     "peaks": []
   },
@@ -12154,7 +12280,13 @@
     "notes": "This is a land of immense beauty and flowing waters \n\nWith the amazing Caleb Kate Jane & Lando\n\nGot caught in a hail/lightning storm that turned into rain 10 miles out… 冷死了\n\nLongest hike in a long time, but trail was flat enough that it would’ve been chill had we not been freezing to death… More pics 2 come",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 40320,
+      "moving_s": 30348,
+      "strava_id": 15792567482,
+      "vertical_m": 915
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -13720,7 +13852,13 @@
     "notes": "Super duper \n\nNo hailstorm how disappointing",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 26892,
+      "moving_s": 23954,
+      "strava_id": 15881228369,
+      "vertical_m": 1877
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -14177,7 +14315,13 @@
     "notes": "I am grateful for mountains and motion! \nThat’s two M’s for Megamind \n\nThis put the biggest smile on my face \nRaced the sun and lost. And then got lost. And phone died. Alas it was a great time \n\nSaw the most beautiful mountain goats \nIf you like walking up and down scree fields this is for you",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 6977,
+      "moving_s": 10367,
+      "strava_id": 15948297669,
+      "vertical_m": 1090
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -14542,7 +14686,13 @@
     "notes": "Powered by EconTalk and a Biggie bag",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 8084,
+      "moving_s": 3029,
+      "strava_id": 15981752633,
+      "vertical_m": 241
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -14700,7 +14850,13 @@
     "notes": "Expecting",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 3302,
+      "moving_s": 1455,
+      "strava_id": 16016383667,
+      "vertical_m": 181
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -15742,7 +15898,13 @@
     "notes": "Hailstorm! Lightningstorm!",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 17825,
+      "moving_s": 16191,
+      "strava_id": 16027898000,
+      "vertical_m": 1271
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -16583,7 +16745,13 @@
     "notes": "Snow!! \n\nA lovely time with my dear friend Scott",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 18629,
+      "moving_s": 19157,
+      "strava_id": 16176498057,
+      "vertical_m": 1234
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -16936,7 +17104,13 @@
     "notes": "Wasatch 7 ✅\n\nThis is the Flag Rock of the Wasatch 7 (derogatory) \n\nBut the worst trail run is better than the best road run \n\n1:30 am McDonald’s messed me up😵‍💫",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 4925,
+      "moving_s": 5045,
+      "strava_id": 16314124054,
+      "vertical_m": 833
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -18033,7 +18207,13 @@
     "notes": "Lovely \n\nFelt strong until the last mile and a half or so. Who needs gels when you have mango yerb and milky ways",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 24153,
+      "moving_s": 9710,
+      "strava_id": 16386615367,
+      "vertical_m": 753
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -19391,7 +19571,13 @@
     "notes": "Big epic day… far too long since I’ve been to my favorite park \n\nAlways the best with Randall Caleb and Lea",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 30506,
+      "moving_s": 24221,
+      "strava_id": 16546755762,
+      "vertical_m": 646
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -19540,7 +19726,13 @@
     "notes": "Jaunt with [strava://athletes/167827098/16]Logan Schlensker",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 3110,
+      "moving_s": 2566,
+      "strava_id": 16616260295,
+      "vertical_m": 182
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -19746,7 +19938,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 3992,
+      "moving_s": 2729,
+      "strava_id": 16727333135,
+      "vertical_m": 165
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -21964,7 +22162,13 @@
     "notes": "64,000 step day\n\nUp the road, down into the canyon, along the river wash, into the narrows, over Halls Divide, back along the river wash to camp. Water got up to my waist in the narrows but no further. Got lost a few times, particularly getting in and out over the narrows and over the divide. My feet hurt. Spectacular trail. Exceptionally eerie, everything was incredibly still unless the wind made the trees rustle. Didn’t see a soul except the jackrabbit that leapt out at the trailhead. Last person on the trail was 11/20. Sand near the river was very fine and sunk me to my knees a couple times. Misjudged mileage and the sun set before I was out of the narrows. Fantastic day. Bedrock tabi socks are a godsend",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 48504,
+      "moving_s": 40832,
+      "strava_id": 16907275628,
+      "vertical_m": 600
+    },
     "trip_id": "halls-creek-2025",
     "peaks": []
   },
@@ -22426,7 +22630,13 @@
     "notes": "Limped out of this. Overdid it the day before, had sores on top of my foot and my right index toe was messed up. Made a probably poor decision to climb out of a notch in the canyon wall on the right and it was a bit dicey, several scramble moves in no fall zones. God bless whoever left cairns indicating the easiest climbing route. Popped out of the canyon wall and trekked a few miles to the road and to my car. Knocked off several miles. Success!",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 9855,
+      "moving_s": 9936,
+      "strava_id": 16907275487,
+      "vertical_m": 394
+    },
     "trip_id": "halls-creek-2025",
     "peaks": []
   },
@@ -22588,7 +22798,13 @@
     "notes": "Lovely stroll, I forgot to turn my watch off so knock off a mile or two",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 6217,
+      "moving_s": 2490,
+      "strava_id": 17030104115,
+      "vertical_m": 76
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -22886,7 +23102,13 @@
     "notes": "Lovely tour with Randall and Jayda. Beautiful day 😭😹\n\nEscaped the inversion!",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "BackcountrySki",
+      "meters": 4772,
+      "moving_s": 5922,
+      "strava_id": 17052173436,
+      "vertical_m": 393
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -23663,7 +23885,13 @@
     "notes": "Thank you to Jude for my first taste of mountaineering… it’s bonkers! \n\nHopped on the trail around 3:30 am, it took us about 12 hours. (Idk why it says 5 hours) Thwarted with about 200 feet of elevation to go to the peak as the snow quality wasn’t good enough for us to trust its leverage on the final traverse. Stoked on this, I’m exhausted and it was nuts",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 17070,
+      "moving_s": 20144,
+      "strava_id": 17109877469,
+      "vertical_m": 1785
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -24049,7 +24277,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "BackcountrySki",
+      "meters": 6474,
+      "moving_s": 6847,
+      "strava_id": 17254578379,
+      "vertical_m": 720
+    },
     "trip_id": "pioneer-yurt-2026",
     "peaks": [
       {
@@ -24542,7 +24776,13 @@
     "notes": "6-7 hour day of brutality and a ton of fun \n\nTy Randall and I decided to bootpack to the saddle rather than straight up the couloir which proved to be a mistake. We were greeted with a knife’s edge ridge and a vertical rock face barring us from summitting from the ridge, so we had to traverse back over, navigating rock, ice and snow. By the time we made it to the main chute, Brinton and Ike were skiing down and we decided to join rather than summit and risk the snow getting icier. Overall awesome, brutal day with some amazing views.  Would love to come back to this peak in the spring.",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 10054,
+      "moving_s": 9602,
+      "strava_id": 17254582473,
+      "vertical_m": 894
+    },
     "trip_id": "pioneer-yurt-2026",
     "peaks": []
   },
@@ -24912,7 +25152,13 @@
     "notes": "Thought the snow was going to kill me at first… I crashed and spilled my monster…",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "BackcountrySki",
+      "meters": 9776,
+      "moving_s": 2741,
+      "strava_id": 17254582429,
+      "vertical_m": 23
+    },
     "trip_id": "pioneer-yurt-2026",
     "peaks": []
   },
@@ -25050,7 +25296,13 @@
     "notes": "Rock Canyon with Schlenny",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 3382,
+      "moving_s": 2566,
+      "strava_id": 17254582263,
+      "vertical_m": 201
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -25172,7 +25424,13 @@
     "notes": "Somewhere up squaw area with Ryan Ruby Kate and Amelia",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 2299,
+      "moving_s": 1880,
+      "strava_id": 17254582435,
+      "vertical_m": 86
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -25898,7 +26156,13 @@
     "notes": "Geriatric pace on bonneville shoreline trail… ran in the dark without a light so I didn’t die. Felt great! Got a bit lost on the way",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 16331,
+      "moving_s": 7245,
+      "strava_id": 17291373886,
+      "vertical_m": 527
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -26388,7 +26652,13 @@
     "notes": "Stomach felt terrible and I was not fueled well…\nSpun that new Jermaine. Jermaine Cole. The real is back the ville is back \nI always forget how freaking steep the climb from my house to BST is…",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 11277,
+      "moving_s": 4150,
+      "strava_id": 17307370147,
+      "vertical_m": 371
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -26470,7 +26740,13 @@
     "notes": "Started watch a little late",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 1101,
+      "moving_s": 1612,
+      "strava_id": 17325659663,
+      "vertical_m": 99
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -26592,7 +26868,13 @@
     "notes": "Holy frickin smokes Happy birthday Alex",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 1709,
+      "moving_s": 1959,
+      "strava_id": 17412697795,
+      "vertical_m": 75
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -26902,7 +27184,13 @@
     "notes": "With Jayda and Randall. Best backcountry snow of the year, but heavy near the bottom. Pretty day\n\nKnees a little sore, will take a couple days off",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "BackcountrySki",
+      "meters": 5313,
+      "moving_s": 6146,
+      "strava_id": 17496835921,
+      "vertical_m": 479
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -28663,7 +28951,13 @@
     "notes": "Stopped watch late, time was 7:08, pace of 13.02 min miles\n\nHoly smokes this was so awesome. Other than the 7 hours of running best day of my life. Shoutout to my mom for coming 😸\n\nMonument Valley basically closed for the day for the event, and the route took us through trails that are normally only accessible by Navajo guide, so I felt so lucky to see so much amazing stuff. Tribal music was playing before we started the race and MV is genuinely one of the most insane places I’ve ever seen. Was in complete awe for most of the run. Vast desert valleys surrounded by incredible buttes. Mitchell Mesa climb was a highlight. \n\nEveryone was so nice and saying good job to each other on the trail it was awesome. I had so much fun eating gummy bears and listening to PinkPantheress. Dill pickle chips at mile 11 were the most insane things I’ve ever tasted \n\nThe course was 3 varying sized loops that were all spectacular in their own right. I think I’m partial to the last loop, miles 21-29\n\nI got sick a couple days ago and was definitely feeling it but I could at least breathe through my nose. Miles 16-21 were genuinely rough, but felt much better for the final 11ish. Probably went a little to quick miles 1-6. I got like full face chills around mile 13 which wasn’t fun \n\nMountain Dew and Sprite at mile 21 were insane. The amount of salt accumulation on my hat was awesome. Definitely underestimated the difficulty of the route, it was sandy the whole time and had more hills than I anticipated\n\nSo much fun!  One of the most beautiful areas I’ve ever seen",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 52904,
+      "moving_s": 26248,
+      "strava_id": 17558114496,
+      "vertical_m": 1030
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -30041,7 +30335,13 @@
     "notes": "Absolutely brutal day with Jude and Parker. Started around 11:30 pm and ended around 11:30 am. 16 miles and 6k vert in 12 hours. 10 of the miles were in the worst snow ever that would sink us past our knees, making it grueling to get anywhere. Seriously one of the most brutal days I’ve ever had outside \n\nWe were worried about summiting due to the snow condition, but it ended up working out alright. The walk along the top ridge was so awesome. \n\nBig awesome day and so much fun mountaineering and really happy with our effort. I didn’t sleep at all so battling crazy fatigue. But mile 13 hot tamales and ibuprofen pulled through",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 25594,
+      "moving_s": 27090,
+      "strava_id": 17723450965,
+      "vertical_m": 1768
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -30164,7 +30464,13 @@
     "notes": "I love listening to the wind go through the trees with my friends at night",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 2763,
+      "moving_s": 2440,
+      "strava_id": 17775173293,
+      "vertical_m": 119
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -30710,7 +31016,13 @@
     "notes": "Fun little slot with my river friends Cam and Hannah and Brittin\n\nVery fun and pretty and cool lizards and plants",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 10246,
+      "moving_s": 9090,
+      "strava_id": 17810066474,
+      "vertical_m": 222
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -32000,7 +32312,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 18361,
+      "moving_s": 13928,
+      "strava_id": 18204945751,
+      "vertical_m": 91
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -32494,7 +32812,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 11022,
+      "moving_s": 6785,
+      "strava_id": 18386618594,
+      "vertical_m": 605
+    },
     "trip_id": "asia-2026",
     "peaks": []
   },
@@ -33280,7 +33604,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 14148,
+      "moving_s": 15723,
+      "strava_id": 18882731944,
+      "vertical_m": 1136
+    },
     "trip_id": "asia-2026",
     "peaks": []
   },
@@ -33526,7 +33856,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 3454,
+      "moving_s": 3556,
+      "strava_id": 18882736230,
+      "vertical_m": 263
+    },
     "trip_id": "asia-2026",
     "peaks": []
   },
@@ -35500,7 +35836,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 74552,
+      "moving_s": 19509,
+      "strava_id": 18882745569,
+      "vertical_m": 843
+    },
     "trip_id": "asia-2026",
     "peaks": []
   },
@@ -35742,7 +36084,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 3313,
+      "moving_s": 3586,
+      "strava_id": 18882745120,
+      "vertical_m": 495
+    },
     "trip_id": "asia-2026",
     "peaks": []
   },
@@ -36444,7 +36792,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 27334,
+      "moving_s": 7398,
+      "strava_id": 18882745423,
+      "vertical_m": 146
+    },
     "trip_id": "asia-2026",
     "peaks": []
   },
@@ -36942,7 +37296,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 15325,
+      "moving_s": 5068,
+      "strava_id": 18882749447,
+      "vertical_m": 256
+    },
     "trip_id": "asia-2026",
     "peaks": []
   },
@@ -38618,7 +38978,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 26914,
+      "moving_s": 15750,
+      "strava_id": 18882754050,
+      "vertical_m": 153
+    },
     "trip_id": "asia-2026",
     "peaks": []
   },
@@ -38852,7 +39218,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 2190,
+      "moving_s": 3156,
+      "strava_id": 18882753809,
+      "vertical_m": 265
+    },
     "trip_id": "asia-2026",
     "peaks": []
   },
@@ -40026,7 +40398,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 24938,
+      "moving_s": 15073,
+      "strava_id": 18880550255,
+      "vertical_m": 501
+    },
     "trip_id": "japan-2026",
     "peaks": [
       {
@@ -41779,7 +42157,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 42887,
+      "moving_s": 20863,
+      "strava_id": 18880550445,
+      "vertical_m": 499
+    },
     "trip_id": "japan-2026",
     "peaks": []
   },
@@ -42729,7 +43113,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 12615,
+      "moving_s": 12855,
+      "strava_id": 18880558538,
+      "vertical_m": 1179
+    },
     "trip_id": "japan-2026",
     "peaks": [
       {
@@ -44794,7 +45184,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 106763,
+      "moving_s": 19166,
+      "strava_id": 18880567138,
+      "vertical_m": 830
+    },
     "trip_id": "japan-2026",
     "peaks": []
   },
@@ -46048,7 +46444,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 25063,
+      "moving_s": 22939,
+      "strava_id": 18910058543,
+      "vertical_m": 1808
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -46479,7 +46881,13 @@
     "notes": "Fruit loops laps with Ethan",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 8079,
+      "moving_s": 2505,
+      "strava_id": 19027163887,
+      "vertical_m": 222
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -47045,7 +47453,13 @@
     "notes": "Farmington canyon parking to flag rock \n\nLizards and cacti and beautiful textures and colors! \nPretzel jello + iceberg shake + Pepsi 0 sugar = 2/10 pre run fuel \n\nI love being in the ville \nSaying goodbye to the tank 😿",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 8985,
+      "moving_s": 3725,
+      "strava_id": 19092365230,
+      "vertical_m": 432
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -47659,7 +48073,13 @@
     "notes": "Snow in da mountains today \n\nPretty chill until last 2 miles. Legs a bit sore",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 16171,
+      "moving_s": 6593,
+      "strava_id": 19115163643,
+      "vertical_m": 511
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -48757,7 +49177,13 @@
     "notes": "Me sowing (riding downhill): 😸\nMe reaping (riding uphill): 😿\n\nFun ride w Coops. The descent was so fun",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 29544,
+      "moving_s": 5917,
+      "strava_id": 19154623868,
+      "vertical_m": 726
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -49043,265 +49469,13 @@
     "notes": "Nice and slow! Feet were not too happy",
     "photos": [],
     "gear": [],
-    "stats": {},
-    "trip_id": "norcal-2026",
-    "peaks": []
-  },
-  {
-    "id": "strava-19183600830",
-    "title": "King’s Creek Falls",
-    "kind": "hike",
-    "place": "near Redding, California",
-    "start_date": "2026-07-04",
-    "end_date": null,
-    "lat": 40.460515,
-    "lng": -121.459226,
-    "route": [
-      [
-        40.46052,
-        -121.45923
-      ],
-      [
-        40.46014,
-        -121.45881
-      ],
-      [
-        40.46011,
-        -121.45803
-      ],
-      [
-        40.45993,
-        -121.45766
-      ],
-      [
-        40.45982,
-        -121.45691
-      ],
-      [
-        40.4597,
-        -121.45684
-      ],
-      [
-        40.45979,
-        -121.45675
-      ],
-      [
-        40.45978,
-        -121.45597
-      ],
-      [
-        40.45933,
-        -121.45457
-      ],
-      [
-        40.45943,
-        -121.45337
-      ],
-      [
-        40.45882,
-        -121.45241
-      ],
-      [
-        40.45871,
-        -121.45161
-      ],
-      [
-        40.45981,
-        -121.45057
-      ],
-      [
-        40.46056,
-        -121.44933
-      ],
-      [
-        40.46097,
-        -121.44808
-      ],
-      [
-        40.46164,
-        -121.44718
-      ],
-      [
-        40.46211,
-        -121.44715
-      ],
-      [
-        40.46219,
-        -121.44683
-      ],
-      [
-        40.46197,
-        -121.44584
-      ],
-      [
-        40.46185,
-        -121.44577
-      ],
-      [
-        40.46164,
-        -121.44598
-      ],
-      [
-        40.46151,
-        -121.44503
-      ],
-      [
-        40.46074,
-        -121.44568
-      ],
-      [
-        40.46006,
-        -121.44595
-      ],
-      [
-        40.45972,
-        -121.44557
-      ],
-      [
-        40.45974,
-        -121.44505
-      ],
-      [
-        40.45997,
-        -121.44482
-      ],
-      [
-        40.46002,
-        -121.4443
-      ],
-      [
-        40.46001,
-        -121.4438
-      ],
-      [
-        40.45961,
-        -121.44241
-      ],
-      [
-        40.4598,
-        -121.44083
-      ],
-      [
-        40.45962,
-        -121.44111
-      ],
-      [
-        40.4598,
-        -121.44084
-      ],
-      [
-        40.45961,
-        -121.44241
-      ],
-      [
-        40.46,
-        -121.44385
-      ],
-      [
-        40.46,
-        -121.44429
-      ],
-      [
-        40.45994,
-        -121.44481
-      ],
-      [
-        40.45972,
-        -121.44499
-      ],
-      [
-        40.4597,
-        -121.44541
-      ],
-      [
-        40.46022,
-        -121.44647
-      ],
-      [
-        40.46029,
-        -121.44787
-      ],
-      [
-        40.45997,
-        -121.44919
-      ],
-      [
-        40.46023,
-        -121.44976
-      ],
-      [
-        40.45956,
-        -121.45087
-      ],
-      [
-        40.45871,
-        -121.4515
-      ],
-      [
-        40.4587,
-        -121.45178
-      ],
-      [
-        40.45876,
-        -121.45234
-      ],
-      [
-        40.45941,
-        -121.45335
-      ],
-      [
-        40.45931,
-        -121.4545
-      ],
-      [
-        40.45943,
-        -121.45526
-      ],
-      [
-        40.45916,
-        -121.45528
-      ],
-      [
-        40.45942,
-        -121.45509
-      ],
-      [
-        40.45957,
-        -121.45526
-      ],
-      [
-        40.45977,
-        -121.45605
-      ],
-      [
-        40.45986,
-        -121.4575
-      ],
-      [
-        40.46012,
-        -121.45839
-      ],
-      [
-        40.4604,
-        -121.45823
-      ],
-      [
-        40.46058,
-        -121.45844
-      ],
-      [
-        40.46056,
-        -121.45949
-      ],
-      [
-        40.46058,
-        -121.45833
-      ]
-    ],
-    "notes": "",
-    "photos": [],
-    "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 6786,
+      "moving_s": 3603,
+      "strava_id": 19170360626,
+      "vertical_m": 99
+    },
     "trip_id": "norcal-2026",
     "peaks": []
   },
@@ -49639,7 +49813,13 @@
     "notes": "Swag as freak. Very surreal & otherworldly \n\nMy feet hate me\n\n\n\n\nWith my mom [strava://athletes/89645781/14]Jessica Rawson and my fam",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 7411,
+      "moving_s": 8210,
+      "strava_id": 19183600811,
+      "vertical_m": 380
+    },
     "trip_id": "norcal-2026",
     "peaks": [
       {
@@ -49649,6 +49829,270 @@
         "elev_m": 2041
       }
     ]
+  },
+  {
+    "id": "strava-19183600830",
+    "title": "King’s Creek Falls",
+    "kind": "hike",
+    "place": "near Redding, California",
+    "start_date": "2026-07-04",
+    "end_date": null,
+    "lat": 40.460515,
+    "lng": -121.459226,
+    "route": [
+      [
+        40.46052,
+        -121.45923
+      ],
+      [
+        40.46014,
+        -121.45881
+      ],
+      [
+        40.46011,
+        -121.45803
+      ],
+      [
+        40.45993,
+        -121.45766
+      ],
+      [
+        40.45982,
+        -121.45691
+      ],
+      [
+        40.4597,
+        -121.45684
+      ],
+      [
+        40.45979,
+        -121.45675
+      ],
+      [
+        40.45978,
+        -121.45597
+      ],
+      [
+        40.45933,
+        -121.45457
+      ],
+      [
+        40.45943,
+        -121.45337
+      ],
+      [
+        40.45882,
+        -121.45241
+      ],
+      [
+        40.45871,
+        -121.45161
+      ],
+      [
+        40.45981,
+        -121.45057
+      ],
+      [
+        40.46056,
+        -121.44933
+      ],
+      [
+        40.46097,
+        -121.44808
+      ],
+      [
+        40.46164,
+        -121.44718
+      ],
+      [
+        40.46211,
+        -121.44715
+      ],
+      [
+        40.46219,
+        -121.44683
+      ],
+      [
+        40.46197,
+        -121.44584
+      ],
+      [
+        40.46185,
+        -121.44577
+      ],
+      [
+        40.46164,
+        -121.44598
+      ],
+      [
+        40.46151,
+        -121.44503
+      ],
+      [
+        40.46074,
+        -121.44568
+      ],
+      [
+        40.46006,
+        -121.44595
+      ],
+      [
+        40.45972,
+        -121.44557
+      ],
+      [
+        40.45974,
+        -121.44505
+      ],
+      [
+        40.45997,
+        -121.44482
+      ],
+      [
+        40.46002,
+        -121.4443
+      ],
+      [
+        40.46001,
+        -121.4438
+      ],
+      [
+        40.45961,
+        -121.44241
+      ],
+      [
+        40.4598,
+        -121.44083
+      ],
+      [
+        40.45962,
+        -121.44111
+      ],
+      [
+        40.4598,
+        -121.44084
+      ],
+      [
+        40.45961,
+        -121.44241
+      ],
+      [
+        40.46,
+        -121.44385
+      ],
+      [
+        40.46,
+        -121.44429
+      ],
+      [
+        40.45994,
+        -121.44481
+      ],
+      [
+        40.45972,
+        -121.44499
+      ],
+      [
+        40.4597,
+        -121.44541
+      ],
+      [
+        40.46022,
+        -121.44647
+      ],
+      [
+        40.46029,
+        -121.44787
+      ],
+      [
+        40.45997,
+        -121.44919
+      ],
+      [
+        40.46023,
+        -121.44976
+      ],
+      [
+        40.45956,
+        -121.45087
+      ],
+      [
+        40.45871,
+        -121.4515
+      ],
+      [
+        40.4587,
+        -121.45178
+      ],
+      [
+        40.45876,
+        -121.45234
+      ],
+      [
+        40.45941,
+        -121.45335
+      ],
+      [
+        40.45931,
+        -121.4545
+      ],
+      [
+        40.45943,
+        -121.45526
+      ],
+      [
+        40.45916,
+        -121.45528
+      ],
+      [
+        40.45942,
+        -121.45509
+      ],
+      [
+        40.45957,
+        -121.45526
+      ],
+      [
+        40.45977,
+        -121.45605
+      ],
+      [
+        40.45986,
+        -121.4575
+      ],
+      [
+        40.46012,
+        -121.45839
+      ],
+      [
+        40.4604,
+        -121.45823
+      ],
+      [
+        40.46058,
+        -121.45844
+      ],
+      [
+        40.46056,
+        -121.45949
+      ],
+      [
+        40.46058,
+        -121.45833
+      ]
+    ],
+    "notes": "",
+    "photos": [],
+    "gear": [],
+    "stats": {
+      "sport": "Hike",
+      "meters": 4863,
+      "moving_s": 4690,
+      "strava_id": 19183600830,
+      "vertical_m": 233
+    },
+    "trip_id": "norcal-2026",
+    "peaks": []
   },
   {
     "id": "strava-19196156992",
@@ -50028,7 +50472,13 @@
     "notes": "🆒 \n\n\nI like this place",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 5456,
+      "moving_s": 4576,
+      "strava_id": 19196156992,
+      "vertical_m": 218
+    },
     "trip_id": "norcal-2026",
     "peaks": []
   },
@@ -50694,7 +51144,13 @@
     "notes": "In the park where Return of the Jedi Endor Moon was filmed! Very pleasant \n\nAlso hiked around Stout Grove Trail",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 9691,
+      "moving_s": 9754,
+      "strava_id": 19230531390,
+      "vertical_m": 323
+    },
     "trip_id": "norcal-2026",
     "peaks": []
   },
@@ -50952,7 +51408,245 @@
     "notes": "Return of the Jedi larp",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 3111,
+      "moving_s": 3829,
+      "strava_id": 19236159430,
+      "vertical_m": 83
+    },
+    "trip_id": "norcal-2026",
+    "peaks": []
+  },
+  {
+    "id": "strava-19263472480",
+    "title": "Fern Canyon @Gold Bluffs Beach",
+    "kind": "hike",
+    "place": "near Crescent City, California",
+    "start_date": "2026-07-09",
+    "end_date": null,
+    "lat": 41.400739,
+    "lng": -124.065575,
+    "route": [
+      [
+        41.40074,
+        -124.06557
+      ],
+      [
+        41.40118,
+        -124.06526
+      ],
+      [
+        41.40191,
+        -124.06507
+      ],
+      [
+        41.40296,
+        -124.06411
+      ],
+      [
+        41.40353,
+        -124.0641
+      ],
+      [
+        41.40367,
+        -124.0637
+      ],
+      [
+        41.40392,
+        -124.06378
+      ],
+      [
+        41.40408,
+        -124.0634
+      ],
+      [
+        41.40325,
+        -124.0624
+      ],
+      [
+        41.40333,
+        -124.0618
+      ],
+      [
+        41.40321,
+        -124.06135
+      ],
+      [
+        41.40331,
+        -124.06106
+      ],
+      [
+        41.40245,
+        -124.05995
+      ],
+      [
+        41.40237,
+        -124.05965
+      ],
+      [
+        41.40231,
+        -124.05986
+      ],
+      [
+        41.40214,
+        -124.05979
+      ],
+      [
+        41.40175,
+        -124.05902
+      ],
+      [
+        41.40167,
+        -124.05916
+      ],
+      [
+        41.4018,
+        -124.05961
+      ],
+      [
+        41.40169,
+        -124.05982
+      ],
+      [
+        41.40185,
+        -124.06059
+      ],
+      [
+        41.40172,
+        -124.06106
+      ],
+      [
+        41.40221,
+        -124.06157
+      ],
+      [
+        41.40202,
+        -124.06119
+      ],
+      [
+        41.40216,
+        -124.0613
+      ],
+      [
+        41.40292,
+        -124.06283
+      ],
+      [
+        41.40354,
+        -124.06332
+      ],
+      [
+        41.40366,
+        -124.06379
+      ],
+      [
+        41.40354,
+        -124.0641
+      ],
+      [
+        41.40297,
+        -124.06408
+      ],
+      [
+        41.40194,
+        -124.06504
+      ],
+      [
+        41.40111,
+        -124.06527
+      ],
+      [
+        41.40064,
+        -124.0656
+      ],
+      [
+        41.40064,
+        -124.06607
+      ],
+      [
+        41.4008,
+        -124.06624
+      ],
+      [
+        41.40105,
+        -124.06801
+      ],
+      [
+        41.4014,
+        -124.06926
+      ],
+      [
+        41.40132,
+        -124.06991
+      ],
+      [
+        41.40134,
+        -124.06872
+      ],
+      [
+        41.40105,
+        -124.06801
+      ],
+      [
+        41.40061,
+        -124.06563
+      ],
+      [
+        41.40072,
+        -124.06599
+      ],
+      [
+        41.40036,
+        -124.06568
+      ],
+      [
+        41.39874,
+        -124.06583
+      ],
+      [
+        41.39648,
+        -124.06565
+      ],
+      [
+        41.39375,
+        -124.06706
+      ],
+      [
+        41.39226,
+        -124.06686
+      ],
+      [
+        41.38931,
+        -124.06757
+      ],
+      [
+        41.38866,
+        -124.06749
+      ],
+      [
+        41.38791,
+        -124.06763
+      ],
+      [
+        41.38741,
+        -124.06788
+      ],
+      [
+        41.38619,
+        -124.06782
+      ]
+    ],
+    "notes": "Beauty! I forgot to stop watch",
+    "photos": [],
+    "gear": [],
+    "stats": {
+      "sport": "Hike",
+      "meters": 4787,
+      "moving_s": 3194,
+      "strava_id": 19263472480,
+      "vertical_m": 60
+    },
     "trip_id": "norcal-2026",
     "peaks": []
   },
@@ -51338,233 +52032,13 @@
     "notes": "Where they filmed Jurassic Park",
     "photos": [],
     "gear": [],
-    "stats": {},
-    "trip_id": "norcal-2026",
-    "peaks": []
-  },
-  {
-    "id": "strava-19263472480",
-    "title": "Fern Canyon @Gold Bluffs Beach",
-    "kind": "hike",
-    "place": "near Crescent City, California",
-    "start_date": "2026-07-09",
-    "end_date": null,
-    "lat": 41.400739,
-    "lng": -124.065575,
-    "route": [
-      [
-        41.40074,
-        -124.06557
-      ],
-      [
-        41.40118,
-        -124.06526
-      ],
-      [
-        41.40191,
-        -124.06507
-      ],
-      [
-        41.40296,
-        -124.06411
-      ],
-      [
-        41.40353,
-        -124.0641
-      ],
-      [
-        41.40367,
-        -124.0637
-      ],
-      [
-        41.40392,
-        -124.06378
-      ],
-      [
-        41.40408,
-        -124.0634
-      ],
-      [
-        41.40325,
-        -124.0624
-      ],
-      [
-        41.40333,
-        -124.0618
-      ],
-      [
-        41.40321,
-        -124.06135
-      ],
-      [
-        41.40331,
-        -124.06106
-      ],
-      [
-        41.40245,
-        -124.05995
-      ],
-      [
-        41.40237,
-        -124.05965
-      ],
-      [
-        41.40231,
-        -124.05986
-      ],
-      [
-        41.40214,
-        -124.05979
-      ],
-      [
-        41.40175,
-        -124.05902
-      ],
-      [
-        41.40167,
-        -124.05916
-      ],
-      [
-        41.4018,
-        -124.05961
-      ],
-      [
-        41.40169,
-        -124.05982
-      ],
-      [
-        41.40185,
-        -124.06059
-      ],
-      [
-        41.40172,
-        -124.06106
-      ],
-      [
-        41.40221,
-        -124.06157
-      ],
-      [
-        41.40202,
-        -124.06119
-      ],
-      [
-        41.40216,
-        -124.0613
-      ],
-      [
-        41.40292,
-        -124.06283
-      ],
-      [
-        41.40354,
-        -124.06332
-      ],
-      [
-        41.40366,
-        -124.06379
-      ],
-      [
-        41.40354,
-        -124.0641
-      ],
-      [
-        41.40297,
-        -124.06408
-      ],
-      [
-        41.40194,
-        -124.06504
-      ],
-      [
-        41.40111,
-        -124.06527
-      ],
-      [
-        41.40064,
-        -124.0656
-      ],
-      [
-        41.40064,
-        -124.06607
-      ],
-      [
-        41.4008,
-        -124.06624
-      ],
-      [
-        41.40105,
-        -124.06801
-      ],
-      [
-        41.4014,
-        -124.06926
-      ],
-      [
-        41.40132,
-        -124.06991
-      ],
-      [
-        41.40134,
-        -124.06872
-      ],
-      [
-        41.40105,
-        -124.06801
-      ],
-      [
-        41.40061,
-        -124.06563
-      ],
-      [
-        41.40072,
-        -124.06599
-      ],
-      [
-        41.40036,
-        -124.06568
-      ],
-      [
-        41.39874,
-        -124.06583
-      ],
-      [
-        41.39648,
-        -124.06565
-      ],
-      [
-        41.39375,
-        -124.06706
-      ],
-      [
-        41.39226,
-        -124.06686
-      ],
-      [
-        41.38931,
-        -124.06757
-      ],
-      [
-        41.38866,
-        -124.06749
-      ],
-      [
-        41.38791,
-        -124.06763
-      ],
-      [
-        41.38741,
-        -124.06788
-      ],
-      [
-        41.38619,
-        -124.06782
-      ]
-    ],
-    "notes": "Beauty! I forgot to stop watch",
-    "photos": [],
-    "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 6945,
+      "moving_s": 5920,
+      "strava_id": 19263470517,
+      "vertical_m": 125
+    },
     "trip_id": "norcal-2026",
     "peaks": []
   },
@@ -52322,7 +52796,13 @@
     "notes": "Watch died before summit, but ~15 miles and 7000+ ft of elevation gain. Bucket list day!! \n\nWe started at 1:45 am and didn’t finish till 8:15 pm. 18 and a half hour day had me dead \n\nFun climbing at the top, absolutely brutal trail the whole way. Idk if I’d do it in one day again, would definitely split it into 2 \n\nBeautiful epic day! So glad Caleb and Ethan could join me \n\nRoped up for Bellyroll and Owen’s Chimney, solo’d the rest. Rapping down was great, I would not have felt comfortable down climbing a couple of these sections.",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 14156,
+      "moving_s": 17124,
+      "strava_id": 19394236734,
+      "vertical_m": 2054
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -52659,7 +53139,13 @@
     "notes": "Fun run and scramble \n\n\n\nFirst run with chest heart rate monitor… got up to 201 bpm despite not feeling like I was going too hard…",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 6593,
+      "moving_s": 3526,
+      "strava_id": 19410013165,
+      "vertical_m": 258
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -53813,7 +54299,13 @@
     "notes": "Fun day with some friends, a little running and a lot of lying down",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 20534,
+      "moving_s": 17678,
+      "strava_id": 19453817847,
+      "vertical_m": 1322
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -54002,7 +54494,13 @@
     "notes": "Rock Canyon w Alex and Max and some other friends climbing curious George",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 3440,
+      "moving_s": 4376,
+      "strava_id": 19464704252,
+      "vertical_m": 192
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -54560,7 +55058,13 @@
     "notes": "10 fun pump track laps w ~900 ft climb",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "MountainBikeRide",
+      "meters": 6451,
+      "moving_s": 2093,
+      "strava_id": 19488343949,
+      "vertical_m": 264
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -55686,7 +56190,13 @@
     "notes": "Absolutely wasted by the sun today I felt terrible… Duel of the Fates on the descent was fantastic",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 29920,
+      "moving_s": 6745,
+      "strava_id": 19505375428,
+      "vertical_m": 769
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -55868,7 +56378,13 @@
     "notes": "Chill little ride up Big Springs",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "MountainBikeRide",
+      "meters": 4268,
+      "moving_s": 1437,
+      "strava_id": 19547083320,
+      "vertical_m": 164
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -56178,7 +56694,13 @@
     "notes": "I ❤️ RC. Nice steady climb and fun descent",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 9659,
+      "moving_s": 3516,
+      "strava_id": 19744637928,
+      "vertical_m": 423
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -56308,7 +56830,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 8374,
+      "moving_s": 1941,
+      "strava_id": 19803033357,
+      "vertical_m": 148
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -57070,7 +57598,13 @@
     "notes": "Sledgehammer to my knees",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Run",
+      "meters": 17063,
+      "moving_s": 9826,
+      "strava_id": 19803036684,
+      "vertical_m": 1006
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -57487,7 +58021,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 7289,
+      "moving_s": 7292,
+      "strava_id": 19872364780,
+      "vertical_m": 591
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -57853,7 +58393,13 @@
     "notes": "Fun class 3 and low 4 scrambling with [strava://athletes/132939604/12]Ethan Koster [strava://athletes/127385167/9]Ty Rawson Randall Pinson",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 6825,
+      "moving_s": 9142,
+      "strava_id": 19896538143,
+      "vertical_m": 937
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -58970,7 +59516,13 @@
     "notes": "With Ty Rawson [strava://athletes/1204433812/9]Ryan Gale Noah & Jimmy and our guard dog Poh \n\nSpectacular day!",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 26174,
+      "moving_s": 24300,
+      "strava_id": 19957750674,
+      "vertical_m": 1586
+    },
     "trip_id": "wind-rivers-2026",
     "peaks": []
   },
@@ -59504,7 +60056,13 @@
     "notes": "Add 5-6 miles or so my watch died. Another spectacular day 😸 hiked 4 out the next morning  A land of Wonders!",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 8401,
+      "moving_s": 11007,
+      "strava_id": 19957565284,
+      "vertical_m": 827
+    },
     "trip_id": "wind-rivers-2026",
     "peaks": []
   },
@@ -59602,7 +60160,13 @@
     "notes": "Probably went about 4 miles up and down this hill when it got too muddy for my car",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 1824,
+      "moving_s": 1676,
+      "strava_id": 19981534653,
+      "vertical_m": 33
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -59860,7 +60424,13 @@
     "notes": "Jaunt",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 10693,
+      "moving_s": 2376,
+      "strava_id": 20007849183,
+      "vertical_m": 158
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -60010,7 +60580,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 6899,
+      "moving_s": 1859,
+      "strava_id": 20014731231,
+      "vertical_m": 119
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -60684,7 +61260,13 @@
     "notes": "Car battery zonked\n\n[strava://athletes/87236448/13]Kate Fredrick [strava://athletes/1204433812/9]Ryan Gale [strava://athletes/185413173/6]Noah N",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 12986,
+      "moving_s": 10434,
+      "strava_id": 20036961292,
+      "vertical_m": 575
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -61014,7 +61596,13 @@
     "notes": "Midnight menaces ride",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 6495,
+      "moving_s": 1923,
+      "strava_id": 20087388167,
+      "vertical_m": 70
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -61144,7 +61732,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 6343,
+      "moving_s": 1276,
+      "strava_id": 20123182530,
+      "vertical_m": 102
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -61718,7 +62312,13 @@
     "notes": "Jaunt",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 21447,
+      "moving_s": 5514,
+      "strava_id": 20138424920,
+      "vertical_m": 299
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -61884,7 +62484,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 7178,
+      "moving_s": 1532,
+      "strava_id": 20147032285,
+      "vertical_m": 177
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -62294,7 +62900,13 @@
     "notes": "This and some gecs",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 18556,
+      "moving_s": 4626,
+      "strava_id": 20170925683,
+      "vertical_m": 475
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -63196,7 +63808,13 @@
     "notes": "Mystical beautiful day \n\nPondering the 道 and the 德 but mostly the 道\n\nSteeper than anticipated",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 18186,
+      "moving_s": 10218,
+      "strava_id": 20246065576,
+      "vertical_m": 1208
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -63518,7 +64136,13 @@
     "notes": "Jaunt… bike needs fix",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 13828,
+      "moving_s": 3702,
+      "strava_id": 20260903063,
+      "vertical_m": 381
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -65460,7 +66084,13 @@
     "notes": "GEEKED \n\nFun chill beautiful day at an easy pace… awesome\n\nThanks again to Scott Hutchins",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Ride",
+      "meters": 62555,
+      "moving_s": 12039,
+      "strava_id": 20314081670,
+      "vertical_m": 1334
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -66170,7 +66800,13 @@
     "notes": "Jacob’s Ladder… e bikes are Cheating… Kayden got flat on lap 2",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "EMountainBikeRide",
+      "meters": 14436,
+      "moving_s": 3708,
+      "strava_id": 20394092031,
+      "vertical_m": 511
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -66752,7 +67388,13 @@
     "notes": "Watch died, probably 10-11 miles or so \n\nSuper beautiful textures and terrains. We had a lovely day",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 11046,
+      "moving_s": 13583,
+      "strava_id": 20462496376,
+      "vertical_m": 1447
+    },
     "trip_id": null,
     "peaks": [
       {
@@ -71087,7 +71729,13 @@
     "notes": "Guess who left the shuttle car keys in the drop off car…",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 20689,
+      "moving_s": 11591,
+      "strava_id": 20546959411,
+      "vertical_m": 756
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -71105,6 +71753,306 @@
     "photos": [],
     "gear": [],
     "stats": {},
+    "trip_id": null,
+    "peaks": []
+  },
+  {
+    "id": "strava-20893025324",
+    "title": "Rock Canyon Trail Run",
+    "kind": "trailrun",
+    "place": "near Provo, Utah",
+    "start_date": "2026-10-29",
+    "end_date": null,
+    "lat": 40.26455,
+    "lng": -111.62978,
+    "route": [
+      [
+        40.26455,
+        -111.62978
+      ],
+      [
+        40.26471,
+        -111.62906
+      ],
+      [
+        40.26458,
+        -111.62875
+      ],
+      [
+        40.26451,
+        -111.62821
+      ],
+      [
+        40.26458,
+        -111.62729
+      ],
+      [
+        40.26494,
+        -111.6262
+      ],
+      [
+        40.26518,
+        -111.62408
+      ],
+      [
+        40.26533,
+        -111.62368
+      ],
+      [
+        40.26555,
+        -111.62341
+      ],
+      [
+        40.26572,
+        -111.62305
+      ],
+      [
+        40.26577,
+        -111.62271
+      ],
+      [
+        40.26572,
+        -111.62214
+      ],
+      [
+        40.26579,
+        -111.62193
+      ],
+      [
+        40.26577,
+        -111.62153
+      ],
+      [
+        40.26559,
+        -111.62108
+      ],
+      [
+        40.26501,
+        -111.62057
+      ],
+      [
+        40.26491,
+        -111.62035
+      ],
+      [
+        40.26494,
+        -111.62011
+      ],
+      [
+        40.26534,
+        -111.61947
+      ],
+      [
+        40.26543,
+        -111.61908
+      ],
+      [
+        40.2654,
+        -111.61887
+      ],
+      [
+        40.26525,
+        -111.61856
+      ],
+      [
+        40.26522,
+        -111.61789
+      ],
+      [
+        40.26506,
+        -111.61767
+      ],
+      [
+        40.26494,
+        -111.61729
+      ],
+      [
+        40.26504,
+        -111.61651
+      ],
+      [
+        40.2651,
+        -111.61639
+      ],
+      [
+        40.26509,
+        -111.61508
+      ],
+      [
+        40.26505,
+        -111.61469
+      ],
+      [
+        40.26487,
+        -111.61415
+      ],
+      [
+        40.2647,
+        -111.61334
+      ],
+      [
+        40.26479,
+        -111.61302
+      ],
+      [
+        40.26477,
+        -111.61272
+      ],
+      [
+        40.26485,
+        -111.61257
+      ],
+      [
+        40.26486,
+        -111.61135
+      ],
+      [
+        40.26499,
+        -111.6108
+      ],
+      [
+        40.26488,
+        -111.61116
+      ],
+      [
+        40.26484,
+        -111.6125
+      ],
+      [
+        40.26474,
+        -111.61273
+      ],
+      [
+        40.26467,
+        -111.61333
+      ],
+      [
+        40.26501,
+        -111.61499
+      ],
+      [
+        40.26507,
+        -111.6164
+      ],
+      [
+        40.26495,
+        -111.61727
+      ],
+      [
+        40.265,
+        -111.61754
+      ],
+      [
+        40.26518,
+        -111.61792
+      ],
+      [
+        40.26523,
+        -111.6185
+      ],
+      [
+        40.26539,
+        -111.61907
+      ],
+      [
+        40.26522,
+        -111.61966
+      ],
+      [
+        40.26501,
+        -111.61999
+      ],
+      [
+        40.26497,
+        -111.62033
+      ],
+      [
+        40.26504,
+        -111.62053
+      ],
+      [
+        40.26529,
+        -111.62072
+      ],
+      [
+        40.2656,
+        -111.62121
+      ],
+      [
+        40.26572,
+        -111.62154
+      ],
+      [
+        40.26574,
+        -111.62194
+      ],
+      [
+        40.26568,
+        -111.62222
+      ],
+      [
+        40.2657,
+        -111.62299
+      ],
+      [
+        40.26556,
+        -111.62337
+      ],
+      [
+        40.26516,
+        -111.62409
+      ],
+      [
+        40.26483,
+        -111.62665
+      ],
+      [
+        40.26458,
+        -111.62751
+      ],
+      [
+        40.26436,
+        -111.62791
+      ],
+      [
+        40.26434,
+        -111.62816
+      ],
+      [
+        40.26437,
+        -111.62908
+      ],
+      [
+        40.26468,
+        -111.62998
+      ],
+      [
+        40.26465,
+        -111.63035
+      ],
+      [
+        40.26432,
+        -111.63052
+      ],
+      [
+        40.26423,
+        -111.63067
+      ],
+      [
+        40.2647,
+        -111.63856
+      ]
+    ],
+    "notes": "",
+    "photos": [],
+    "gear": [],
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 3731,
+      "moving_s": 1559,
+      "strava_id": 20893025324,
+      "vertical_m": 208
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -71374,7 +72322,13 @@
     "notes": "",
     "photos": [],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "Hike",
+      "meters": 2220,
+      "moving_s": 1406,
+      "strava_id": 20851491971,
+      "vertical_m": 255
+    },
     "trip_id": null,
     "peaks": []
   },
@@ -71859,7 +72813,381 @@
       }
     ],
     "gear": [],
-    "stats": {},
+    "stats": {
+      "sport": "MountainBikeRide",
+      "meters": 17581,
+      "moving_s": 4328,
+      "strava_id": 20874503115,
+      "vertical_m": 373
+    },
+    "trip_id": null,
+    "peaks": []
+  },
+  {
+    "id": "strava-20902508504",
+    "title": "Holy Ultra",
+    "kind": "trailrun",
+    "place": "Provo to Salt Lake City, Utah",
+    "start_date": "2026-11-07",
+    "end_date": null,
+    "lat": 40.24503,
+    "lng": -111.62746,
+    "route": [
+      [
+        40.245,
+        -111.6275
+      ],
+      [
+        40.2431,
+        -111.6246
+      ],
+      [
+        40.2454,
+        -111.6248
+      ],
+      [
+        40.2453,
+        -111.6224
+      ],
+      [
+        40.2478,
+        -111.6209
+      ],
+      [
+        40.2453,
+        -111.6224
+      ],
+      [
+        40.2454,
+        -111.6248
+      ],
+      [
+        40.2431,
+        -111.6246
+      ],
+      [
+        40.2465,
+        -111.6293
+      ],
+      [
+        40.2506,
+        -111.6302
+      ],
+      [
+        40.2493,
+        -111.6299
+      ],
+      [
+        40.2502,
+        -111.6321
+      ],
+      [
+        40.2648,
+        -111.6317
+      ],
+      [
+        40.2647,
+        -111.6418
+      ],
+      [
+        40.2629,
+        -111.6457
+      ],
+      [
+        40.264,
+        -111.659
+      ],
+      [
+        40.2702,
+        -111.6571
+      ],
+      [
+        40.2856,
+        -111.6592
+      ],
+      [
+        40.3064,
+        -111.6555
+      ],
+      [
+        40.3136,
+        -111.6561
+      ],
+      [
+        40.3121,
+        -111.6697
+      ],
+      [
+        40.3156,
+        -111.672
+      ],
+      [
+        40.3207,
+        -111.6722
+      ],
+      [
+        40.3252,
+        -111.6802
+      ],
+      [
+        40.3265,
+        -111.6868
+      ],
+      [
+        40.3308,
+        -111.6915
+      ],
+      [
+        40.3324,
+        -111.6958
+      ],
+      [
+        40.3341,
+        -111.6941
+      ],
+      [
+        40.3382,
+        -111.6937
+      ],
+      [
+        40.34,
+        -111.6945
+      ],
+      [
+        40.3402,
+        -111.6966
+      ],
+      [
+        40.3462,
+        -111.6985
+      ],
+      [
+        40.3506,
+        -111.7043
+      ],
+      [
+        40.352,
+        -111.7041
+      ],
+      [
+        40.3566,
+        -111.7134
+      ],
+      [
+        40.3612,
+        -111.7165
+      ],
+      [
+        40.3648,
+        -111.7159
+      ],
+      [
+        40.3688,
+        -111.723
+      ],
+      [
+        40.381,
+        -111.7288
+      ],
+      [
+        40.3825,
+        -111.7317
+      ],
+      [
+        40.3911,
+        -111.7382
+      ],
+      [
+        40.3938,
+        -111.743
+      ],
+      [
+        40.4021,
+        -111.7493
+      ],
+      [
+        40.4041,
+        -111.7544
+      ],
+      [
+        40.4092,
+        -111.7817
+      ],
+      [
+        40.4088,
+        -111.7903
+      ],
+      [
+        40.4193,
+        -111.8088
+      ],
+      [
+        40.4206,
+        -111.8145
+      ],
+      [
+        40.4223,
+        -111.8145
+      ],
+      [
+        40.4263,
+        -111.8211
+      ],
+      [
+        40.4271,
+        -111.8203
+      ],
+      [
+        40.4286,
+        -111.8244
+      ],
+      [
+        40.4301,
+        -111.8224
+      ],
+      [
+        40.4297,
+        -111.825
+      ],
+      [
+        40.4316,
+        -111.8266
+      ],
+      [
+        40.4313,
+        -111.8864
+      ],
+      [
+        40.4327,
+        -111.8872
+      ],
+      [
+        40.4338,
+        -111.8919
+      ],
+      [
+        40.4399,
+        -111.8981
+      ],
+      [
+        40.4501,
+        -111.9023
+      ],
+      [
+        40.4498,
+        -111.9107
+      ],
+      [
+        40.4523,
+        -111.9129
+      ],
+      [
+        40.4584,
+        -111.9139
+      ],
+      [
+        40.4636,
+        -111.9128
+      ],
+      [
+        40.4774,
+        -111.9018
+      ],
+      [
+        40.4831,
+        -111.8935
+      ],
+      [
+        40.4866,
+        -111.8908
+      ],
+      [
+        40.5001,
+        -111.8588
+      ],
+      [
+        40.5038,
+        -111.8531
+      ],
+      [
+        40.5251,
+        -111.8531
+      ],
+      [
+        40.5275,
+        -111.855
+      ],
+      [
+        40.5302,
+        -111.8526
+      ],
+      [
+        40.6094,
+        -111.8529
+      ],
+      [
+        40.6161,
+        -111.8587
+      ],
+      [
+        40.6207,
+        -111.8557
+      ],
+      [
+        40.6259,
+        -111.8546
+      ],
+      [
+        40.6875,
+        -111.8537
+      ],
+      [
+        40.709,
+        -111.8553
+      ],
+      [
+        40.7129,
+        -111.8532
+      ],
+      [
+        40.7603,
+        -111.8537
+      ],
+      [
+        40.7609,
+        -111.8523
+      ],
+      [
+        40.7782,
+        -111.8522
+      ],
+      [
+        40.7769,
+        -111.8427
+      ],
+      [
+        40.7772,
+        -111.8398
+      ],
+      [
+        40.7788,
+        -111.8423
+      ],
+      [
+        40.7789,
+        -111.8401
+      ]
+    ],
+    "notes": "",
+    "photos": [],
+    "gear": [],
+    "stats": {
+      "sport": "TrailRun",
+      "meters": 89557,
+      "moving_s": 44861,
+      "strava_id": 20902508504,
+      "vertical_m": 1407
+    },
     "trip_id": null,
     "peaks": []
   }
