@@ -315,7 +315,7 @@ function afterFilter(){
 const sorted = () => [...entries].sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
 const vert = e => +(e.stats&&e.stats.vertical_m)||0;
 const ft = m => m*3.28084;
-const entryMeters = e => routeMeters(e.route) || (+(e.stats&&e.stats.meters)||0);
+const entryMeters = e => (+(e.stats&&e.stats.meters)||0) || routeMeters(e.route);
 function renderTally(){
   const v=shown();
   $("#nEntries").textContent=v.length;
@@ -400,7 +400,7 @@ function renderSheet(){
   if(!e && selTrip && tripById(selTrip)){ renderTripSheet(tripById(selTrip)); return; }
   if(!e){ box.innerHTML=totalsHTML(); return; }
   const trip=tripById(e.trip_id);
-  const nd=days(e.start_date,e.end_date), meters=routeMeters(e.route), st=e.stats||{};
+  const nd=days(e.start_date,e.end_date), meters=entryMeters(e), st=e.stats||{};
   const gearth=`https://earth.google.com/web/@${e.lat},${e.lng},1500a,3000d,35y,0h,60t,0r`;
   box.innerHTML=`
     <div class="kicker label"><span>${esc(KINDS[e.kind])}</span><span>${esc(fmtRange(e.start_date,e.end_date))}</span>${trip?`<button type="button" class="kickerlink" data-opentrip="${esc(trip.id)}">Trip: ${esc(trip.title)} →</button>`:""}</div>
