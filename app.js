@@ -432,7 +432,7 @@ function renderSheet(){
   // size each tile to its picture's shape so rows line up with nothing cropped
   box.querySelectorAll(".ph img,.ph video").forEach(m=>{ const set=()=>{ const w=m.naturalWidth||m.videoWidth, h=m.naturalHeight||m.videoHeight; if(w&&h) m.closest(".ph").style.setProperty("--ar",(w/h).toFixed(3)); };
     if(m.tagName==="VIDEO"){ if(m.readyState>=1) set(); else m.addEventListener("loadedmetadata",set,{once:true}); } else { if(m.complete) set(); else m.addEventListener("load",set,{once:true}); } });
-  if(q("#gallery")) q("#gallery").addEventListener("click",ev=>{ const d=ev.target.closest("[data-del]"); if(d){ removePhoto(e,+d.dataset.del,d); return; } const img=ev.target.closest("img"); if(img) lightbox(img.src,img.alt); });
+  if(q("#gallery")) q("#gallery").addEventListener("click",ev=>{ const d=ev.target.closest("[data-del]"); if(d){ removePhoto(e,+d.dataset.del,d); return; } const img=ev.target.closest("img"); if(img){ const figs=[...q("#gallery").querySelectorAll("figure")]; const items=e.photos.map((p,i)=>({src:photoUrl(p),alt:p.name||`${p.type==="video"?"Video":"Photo"} ${i+1} from ${e.title}`,video:p.type==="video",poster:p.poster?photoUrl({path:p.poster}):""})); lightbox(items,Math.max(0,figs.indexOf(img.closest("figure")))); } });
   const drop=q("#drop");
   if(drop){ drop.onclick=()=>q("#fileIn").click(); q("#fileIn").onchange=ev=>uploadPhotos(e,[...ev.target.files]);
     drop.addEventListener("dragover",ev=>{ev.preventDefault();drop.classList.add("over");}); drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
@@ -696,11 +696,24 @@ async function removePhoto(e,i,btn){
   if(error){ setStatus("Couldn't remove that photo: "+error.message,true); return; }
   if(gone) await sb.storage.from("photos").remove([gone.path]); refresh(true);
 }
-function lightbox(src,alt,isVideo){
-  const lb=document.createElement("div"); lb.className="lightbox"; lb.innerHTML=`${isVideo?`<video controls autoplay playsinline></video>`:`<img alt="">`}<button type="button" aria-label="Close">×</button>`;
-  const m=lb.querySelector(isVideo?"video":"img"); m.src=src; if(isVideo) m.setAttribute("aria-label",alt); else m.alt=alt;
-  const close=()=>{ lb.remove(); document.removeEventListener("keydown",k); }; const k=ev=>{ if(ev.key==="Escape") close(); };
-  lb.addEventListener("click",ev=>{ if(ev.target===lb||ev.target.tagName==="BUTTON") close(); }); document.addEventListener("keydown",k); document.body.appendChild(lb);
+// items: [{src, alt, video, poster}]. Left/right arrows, the on-screen arrows or a swipe move through them; Escape closes.
+function lightbox(items,start){
+  let i=start||0; const many=items.length>1;
+  const lb=document.createElement("div"); lb.className="lightbox"; lb.setAttribute("role","dialog"); lb.setAttribute("aria-modal","true");
+  lb.innerHTML=`<div class="lbstage"></div><button type="button" class="lbclose" aria-label="Close">×</button>${many?`<button type="button" class="lbnav lbprev" aria-label="Previous">‹</button><button type="button" class="lbnav lbnext" aria-label="Next">›</button><span class="lbcount mono"></span>`:""}`;
+  const stage=lb.querySelector(".lbstage");
+  const show=()=>{ const it=items[i];
+    stage.innerHTML=it.video?`<video controls autoplay playsinline${it.poster?` poster="${esc(it.poster)}"`:""}></video>`:`<img alt="">`;
+    const m=stage.firstChild; m.src=it.src; if(it.video) m.setAttribute("aria-label",it.alt); else m.alt=it.alt;
+    if(many){ lb.querySelector(".lbcount").textContent=`${i+1} / ${items.length}`;
+      [items[(i+1)%items.length],items[(i-1+items.length)%items.length]].forEach(n=>{ if(!n.video){ const pre=new Image(); pre.src=n.src; } }); } };
+  const go=d=>{ if(!many) return; i=(i+d+items.length)%items.length; show(); };
+  const close=()=>{ lb.remove(); document.removeEventListener("keydown",k,true); };
+  const k=ev=>{ if(ev.key==="Escape"){ ev.preventDefault(); close(); } else if(ev.key==="ArrowRight"){ ev.preventDefault(); ev.stopPropagation(); go(1); } else if(ev.key==="ArrowLeft"){ ev.preventDefault(); ev.stopPropagation(); go(-1); } };
+  lb.addEventListener("click",ev=>{ const b=ev.target.closest("button"); if(b){ if(b.classList.contains("lbprev")) go(-1); else if(b.classList.contains("lbnext")) go(1); else close(); return; } if(ev.target===lb||ev.target===stage) close(); });
+  let sx=null, sy=0; lb.addEventListener("touchstart",ev=>{ if(ev.touches.length===1){ sx=ev.touches[0].clientX; sy=ev.touches[0].clientY; } },{passive:true});
+  lb.addEventListener("touchend",ev=>{ if(sx===null) return; const dx=ev.changedTouches[0].clientX-sx, dy=ev.changedTouches[0].clientY-sy; sx=null; if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5) go(dx<0?1:-1); });
+  document.addEventListener("keydown",k,true); document.body.appendChild(lb); show(); lb.querySelector(".lbclose").focus();
 }
 
 /* ---------- add / edit ---------- */
