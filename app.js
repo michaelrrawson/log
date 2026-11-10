@@ -277,6 +277,8 @@ function setupMapButtons(){
 
 /* ---------- search and filters: one rule decides what's shown everywhere ---------- */
 const filt={q:"",kinds:new Set(),years:new Set()};
+// 4x4 replays: the LX 470 for trips before August 2026, the 4Runner from then on
+const vehicleFor=e=>String(e.start_date||"")<"2026-08-01"?"lx470":"4runner";
 const yearOf=e=>String(e.start_date||"").slice(0,4)||"Undated";
 const hay=e=>[e.title,e.place,KINDS[e.kind],e.notes,...e.gear,...e.peaks.map(p=>p.name),(tripById(e.trip_id)||{}).title,yearOf(e)].join(" ").toLowerCase();
 function matchesFilters(e){
@@ -863,7 +865,7 @@ function startReplay(e){
   // swap the flat marker for a little animated 3D figure once three.js has loaded
   let rider=null;
   if(window.Rider3D && Rider3D.supports(e.kind) && !reduce) Rider3D.load().then(()=>{ if(!replay||replay.e!==e) return;
-    try{ rider=Rider3D.create(map,e.kind); headEl.style.visibility="hidden"; }catch(err){ console.warn("3D figure unavailable",err); } }).catch(()=>{});
+    try{ rider=Rider3D.create(map,e.kind,{vehicle:vehicleFor(e)}); headEl.style.visibility="hidden"; }catch(err){ console.warn("3D figure unavailable",err); } }).catch(()=>{});
   const lock=["dragPan","scrollZoom","doubleClickZoom","boxZoom","keyboard","touchZoomRotate","dragRotate","touchPitch"];
   lock.forEach(h=>map[h]&&map[h].disable());
 
