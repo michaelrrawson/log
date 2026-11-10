@@ -24,7 +24,7 @@
   }
 
   // ---- the generated 4Runner (scripts/4runner/build.py -> assets/4runner): one packed binary + three textures, loaded once
-  const RUNNER_DIR = "assets/4runner/", RUNNER_VER = "2";
+  const RUNNER_DIR = "assets/4runner/", RUNNER_VER = "3";
   let runnerP = null;
   function loadRunner(){
     if(runnerP) return runnerP;

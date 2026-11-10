@@ -7,7 +7,7 @@ How it works
        - the side profile traced from a side-on photo (side_profile.json),
        - a cross-section (half width at each height) from published dimensions,
        - plan rounding of the four corners, plus swelling for the fender flares.
-     Mirrors, rear spoiler and running boards are blended into the same field.
+     Mirrors and the rear spoiler are blended into the same field.
      Marching cubes turns the field into a mesh, which is smoothed and simplified.
   2. Paint: every detail (glass, pillars, grille, lights, chrome, panel gaps, badges) is
      described in 3D and baked into one texture atlas through five planar projections
@@ -150,16 +150,14 @@ def parts(p):
     t = np.clip((z - zs1) / (zs0 - zs1), 0, 1)
     yc = 1.792 - 0.07 * (1 - t)
     spoiler = sd_box(np.stack([x, y - yc, z], -1), np.array([0, 0, (zs0 + zs1) / 2]), (0.66, 0.026, (zs0 - zs1) / 2), 0.022)
-    # running boards (SR5 Premium)
-    board = sd_box(q, np.array([0.935, 0.315, (FA - 0.56 + RA + 0.56) / 2]), (0.075, 0.02, (FA - RA - 1.12) / 2), 0.012)
-    return mirror, spoiler, board
+    return mirror, spoiler
 
 def field(X, Y, Z):
     b = body_field(X, Y, Z)
     p = np.stack([X, Y, Z], -1)
-    m, s, r = parts(p)
-    f = smin(b, m, 0.025); f = smin(f, s, 0.03); f = np.minimum(f, r)
-    return f, b, m, s, r
+    m, s = parts(p)
+    f = smin(b, m, 0.025); f = smin(f, s, 0.03)
+    return f, b, m, s
 
 # ---------------------------------------------------------------- mesh
 STEP = 0.011
@@ -447,9 +445,6 @@ def uv_body(m):
     so = SIDE_OUT(np.stack([cen[:, 1], cen[:, 2]], -1))
     mat[(so > 0.012) & (cen[:, 1] < 1.05)] = 1
     mat[(so > -0.008) & (fn[:, 1] < -0.15) & (cen[:, 1] < 1.0) & (cen[:, 1] > 0.45)] = 1
-    # running boards
-    p = cen.copy(); _, _, board = parts(p[None])
-    mat[(board[0] < 0.006)] = 2
     names = ["left", "right", "front", "rear", "top"]
     outV, outN, outUV, outF, outM = [], [], [], [], []
     base = 0
