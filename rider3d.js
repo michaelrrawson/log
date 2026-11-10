@@ -27,7 +27,7 @@
   // dims: front/rear axle z, wheel-centre |x| and tyre radius in metres; rim: wheel colour.
   const VEHICLES = {
     "4runner": { ver:"3", fa:1.5165, ra:-1.2775, wx:.80,  r:.4015, rim:0xc9ced4, rimShine:110 },   // 2012 4Runner SR5, BFG KO3 265/70R17
-    "lx470":   { ver:"1", fa:1.6103, ra:-1.2347, wx:.813, r:.3957, rim:0x7d5f3a, rimShine:22 },    // 1998 LX 470, BFG KO2 275/70R16, bronze wheels
+    "lx470":   { ver:"2", fa:1.6103, ra:-1.2347, wx:.813, r:.3957, rim:0x5c4229, rimShine:12 },    // 1998 LX 470, BFG KO2 275/70R16, bronze wheels
   };
   const vehicleP = {};
   function loadVehicle(name){
@@ -43,7 +43,7 @@
       const mats = {
         body:  [Ph({ map:atlas, specularMap:spec, specular:0x9aa1a9, shininess:55 }), dark, silver],
         wheel: [Ph({ map:wheelTex, specular:0x161616, shininess:5, side:T.DoubleSide }),
-                Ph({ color:V.rim, specular:V.rimShine > 60 ? 0xffffff : 0x6b5a44, shininess:V.rimShine, side:T.DoubleSide }), Ph({ color:0x1b1c1f, side:T.DoubleSide })],
+                Ph({ color:V.rim, specular:V.rimShine > 60 ? 0xffffff : 0x2e261c, shininess:V.rimShine, side:T.DoubleSide }), Ph({ color:0x1b1c1f, side:T.DoubleSide })],
       };
       return { geo: parseVehicle(T, buf), mats, V };
     });
