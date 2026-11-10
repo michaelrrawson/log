@@ -152,7 +152,7 @@
       };
     }
     else if(type==="4runner"){ // 2012 Toyota 4Runner (5th gen), Magnetic Gray with silver trim; the figure drives from the left seat (+X)
-      const car=new T.Group(); root.add(car);
+      const car=new T.Group(); car.scale.setScalar(.78); root.add(car);  // a bit smaller than life next to the walkers
       const P=new T.MeshPhongMaterial({ color:0x666a6f, shininess:70, specular:0x8a8f96 });   // gray metallic paint
       const S=new T.MeshPhongMaterial({ color:0xd2d6db, shininess:110, specular:0xffffff });  // silver / chrome trim
       const G=new T.MeshPhongMaterial({ color:0x161b20, shininess:90, specular:0x9aa4ad, transparent:true, opacity:.62, side:T.DoubleSide }); // tinted glass
@@ -174,17 +174,38 @@
         box(.04,.04,2.1,S, x*1.02,.66,-.12);            // silver body-side strip
         box(.14,.04,1.3,S, x*1.07,.42,-.12);            // silver running boards
         box(.1,.08,.14,S, x*1.1,1.02,.36);              // silver mirrors
-        box(.26,.1,.05,mat(0xf2f4f6), x*.66,.86,front+.005); // headlights
-        box(.08,.05,.05,AMB, x*.88,.82,front+.004);
         box(.06,.3,.05,RED, x*.94,.98,back-.005);       // tall taillights
         for(const z of [.92,-.92]) box(.1,.08,.86,D, x*1.05,.88,z); // fender flares
       }
-      box(.78,.26,.04,D, 0,.78,front+.01);              // grille
-      box(.82,.035,.05,S, 0,.92,front+.02); box(.82,.035,.05,S, 0,.64,front+.02); box(.62,.025,.05,S, 0,.78,front+.03); // chrome grille bars
+      // 5th-gen face: tapered grille in a chrome surround, Toyota emblem, headlights sweeping up and back into the fenders
+      const trap=(tw,bw,top,bot)=>{ const s=new T.Shape(); s.moveTo(-tw/2,top); s.lineTo(tw/2,top); s.lineTo(bw/2,bot); s.lineTo(-bw/2,bot); s.closePath(); return s; };
+      const gS=mesh(new T.ExtrudeGeometry(trap(.74,.6,.95,.6),{depth:.03,bevelEnabled:false}), S); gS.position.z=front; car.add(gS);
+      const gD=mesh(new T.ExtrudeGeometry(trap(.68,.54,.92,.63),{depth:.04,bevelEnabled:false}), D); gD.position.z=front; car.add(gD);
+      for(const y of [.85,.77,.69]) box(.54+(y-.63)*.45,.018,.02,S, 0,y,front+.045);  // horizontal grille bars
+      const emb=new T.Group(); emb.position.set(0,.81,front+.06); car.add(emb);       // Toyota emblem: three ovals
+      const oval=(rx,ry,t)=>{ const o=mesh(new T.TorusGeometry(1,t,6,24), S); o.scale.set(rx,ry,.03); emb.add(o); return o; };
+      oval(.075,.05,.12); oval(.026,.042,.18); oval(.052,.022,.2).position.y=.022;
+      for(const x of [1,-1]){
+        const hl=new T.Group(); hl.position.set(x*.5,.87,front-.035); hl.rotation.set(0,x*.38,x*.14); car.add(hl);
+        const lens=mesh(new T.BoxGeometry(.26,.09,.06), new T.MeshPhongMaterial({ color:0xdfe6ec, shininess:120, specular:0xffffff })); hl.add(lens);
+        const amber=mesh(new T.BoxGeometry(.07,.05,.065), AMB); amber.position.x=x*.1; amber.position.y=-.02; hl.add(amber);
+        const brow=mesh(new T.BoxGeometry(.27,.02,.065), S); brow.position.y=.055; hl.add(brow);
+        const fog=mesh(new T.CylinderGeometry(.04,.04,.03,12), mat(0xf6f1d8)); fog.rotation.x=Math.PI/2; fog.position.set(x*.47,.44,front+.07); car.add(fog);
+        const fogB=mesh(new T.BoxGeometry(.14,.07,.02), D); fogB.position.set(x*.47,.44,front+.06); car.add(fogB);
+        // the 4Runner's kicked-up rear quarter window: paint rises over the rear wheel
+        box(.03,.15,.5,P, x*.605,.95,-1.19);
+        const kick=mesh(new T.BoxGeometry(.03,.15,.2), P); kick.position.set(x*.605,.92,-.88); kick.rotation.x=-.5; car.add(kick);
+      }
       box(W+.02,.2,.16,P, 0,.43,front-.02);             // front bumper
       box(.64,.07,.12,S, 0,.33,front-.04);              // silver skid plate
       box(W+.02,.18,.14,P, 0,.45,back+.02);             // rear bumper
       box(.5,.05,.06,S, 0,.84,back-.01);                // silver tailgate garnish
+      { const cv=document.createElement("canvas"); cv.width=256; cv.height=40; const g=cv.getContext("2d");   // 4RUNNER lettering on the tailgate
+        g.fillStyle="#d8dce0"; g.font="bold 30px Arial, sans-serif"; g.textAlign="center"; g.textBaseline="middle"; g.fillText("4RUNNER",128,22);
+        const name=mesh(new T.PlaneGeometry(.42,.066), new T.MeshBasicMaterial({ map:new T.CanvasTexture(cv), transparent:true }));
+        name.position.set(0,.74,back-.012); name.rotation.y=Math.PI; car.add(name);
+        const emR=new T.Group(); emR.position.set(0,.92,back-.012); emR.rotation.y=Math.PI; car.add(emR);
+        for(const [rx,ry,t,y] of [[.06,.04,.12,0],[.021,.034,.18,0],[.042,.018,.2,.018]]){ const o=mesh(new T.TorusGeometry(1,t,6,24), S); o.scale.set(rx,ry,.03); o.position.y=y; emR.add(o); } }
       box(.9,.36,.02,G, 0,1.12,back+.04);               // rear window
       // wheels: black tires with silver six-spoke alloys
       const wheels=[];
