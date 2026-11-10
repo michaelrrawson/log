@@ -299,67 +299,83 @@ def shade(x, y, z, fuel_door):
     put(sw & (z < Z_TAIL + 0.15) & inpoly(F["tail_clear"], z, y), LENS, 0.9)
     put(sw & (z > Z_NOSE - 0.2) & inpoly(F["turn"], z, y), AMBER, 0.9)
 
-    # ---- front face (LX 470), laid out from a front three-quarter photo:
-    #      tall chrome-ringed grille with thick black horizontal bars and the Lexus L high in the middle;
-    #      each side a small inner lamp and a big outer lamp (projector + amber corner) that sit lower than the grille top;
-    #      a body-colour strip, then the gray bumper: crease, centre plate, slotted intakes either side, rectangular fog lamps.
+    # ---- front face (LX 470), measured from a straight-on front photo (scaled by the 76 in body width):
+    #      a wide trapezoid grille (much wider at the top) with a chrome ring, seven thin chrome bars on black and a big
+    #      Lexus L; each side a small inner lamp angled along the grille edge and a big outer lamp (projector + amber
+    #      corner); a body-colour strip, then the gray bumper with plate recess, two-slot intakes and rectangular fog lamps.
     face = z > Z_NOSE - 0.10
-    GT, GB = 1.100, 0.828
-    gw = lambda yy: 0.300 + 0.035 * np.clip((yy - GB) / (GT - GB), 0, 1)
-    def rrect_in(halfw, y0, y1, r, pad=0.0):
-        """Inside a rounded rectangle |x| < halfw(y), y0 < y < y1, corner radius r, shrunk by pad."""
-        hw_ = halfw(y) - pad; a0, a1 = y0 + pad, y1 - pad
+    def poly(pts):
+        return face & Path(pts).contains_points(np.stack([ax.ravel(), y.ravel()], -1)).reshape(x.shape)
+    GT, GB = 1.058, 0.812
+    gw = lambda yy: 0.395 + 0.087 * np.clip((yy - GB) / (GT - GB), 0, 1)        # half width: 0.395 at the bottom, 0.482 at the top
+    def trap_in(pad, r_top, r_bot):
+        a0, a1 = GB + pad, GT - pad; hw_ = gw(y) - pad
         inside = (ax < hw_) & (y > a0) & (y < a1)
-        cx = hw_ - r; cyl = a0 + r; cyh = a1 - r
-        corner = (ax > cx) & ((y < cyl) | (y > cyh))
-        dy = np.where(y < cyl, y - cyl, y - cyh)
-        return inside & ~(corner & (np.hypot(ax - cx, dy) > r))
-    g_outer = face & rrect_in(gw, GB, GT, 0.035)
-    g_inner = face & rrect_in(gw, GB, GT, 0.025, pad=0.016)
-    put(g_outer, CHROME, 1.0)
-    put(g_inner, (10, 11, 12), 0.3)
-    bars = g_inner & (np.mod((y - GB - 0.012) / 0.042, 1.0) < 0.62)
-    put(bars, (34, 36, 39), 0.75)
-    put(bars & (np.mod((y - GB - 0.012) / 0.042, 1.0) > 0.50), (88, 92, 98), 0.95)     # lit top edge of each bar
-    # emblem plate behind the L (drawn on top in add_badges)
-    put(face & (np.hypot(ax / 0.068, (y - 0.985) / 0.047) < 1.0), (24, 26, 28), 0.8)
+        cut = np.zeros_like(inside)
+        for cy, r in ((a1 - r_top, r_top), (a0 + r_bot, r_bot)):
+            cx = gw(cy) - pad - r
+            zone = (ax > cx) & ((y > cy) if cy > (a0 + a1) / 2 else (y < cy))
+            cut |= zone & (np.hypot(ax - cx, y - cy) > r)
+        return face & inside & ~cut
+    put(trap_in(0.0, 0.03, 0.055), CHROME, 1.0)
+    g_in = trap_in(0.016, 0.02, 0.04)
+    put(g_in, (10, 11, 12), 0.3)
+    t = np.mod((y - GB - 0.026) / 0.0305, 1.0)
+    bars = g_in & (t < 0.27) & (y > GB + 0.02) & (y < GT - 0.02)
+    put(bars, (176, 181, 187), 1.0)
+    put(bars & (t < 0.1), (222, 226, 230), 1.0)                                    # bright top edge of each bar
+    put(g_in & (np.abs(np.mod(ax + 0.06, 0.12) - 0.06) < 0.0025), (26, 27, 29), 0.3)   # faint vertical dividers
+    put(face & (np.hypot(ax / 0.084, (y - 0.944) / 0.056) < 1.0), (12, 13, 14), 0.4)    # clear the bars behind the emblem
 
-    # lamps: top edge drops toward the outside; both lamps stop below the grille top
-    lamp_top = lambda xx: 1.035 - 0.035 * np.clip((xx - 0.36) / 0.58, 0, 1)
-    LB = 0.838
-    inner_l = face & (ax > gw(y) + 0.022 + 0.03 * (1.04 - y)) & (ax < 0.475) & (y > LB + 0.008) & (y < lamp_top(ax) - 0.015)
-    outer_l = face & (ax > 0.49) & (ax < W - 0.004) & (y > LB) & (y < lamp_top(ax))
+    # inner lamp: rounded quadrilateral whose inner edge runs parallel to the grille side
+    inner_l = poly([(0.445, 0.830), (0.598, 0.830), (0.614, 0.846), (0.612, 0.982), (0.598, 0.995), (0.494, 0.990), (0.478, 0.976)])
+    # outer lamp: taller, top edge rising toward the outside, wraps the corner
+    outer_l = poly([(0.628, 0.824), (0.900, 0.824), (0.918, 0.842), (0.922, 1.030), (0.902, 1.046), (0.700, 1.036), (0.640, 1.022), (0.626, 1.004)])
     for lm in (inner_l, outer_l):
-        put(lm, (150, 157, 164), 0.7)                                                # clear lens over chrome
-        col[lm] *= np.clip(0.80 + 0.25 * (y[lm] - LB) / 0.2, 0.8, 1.05)[:, None]
-        put(lm & ~(np.roll(lm, 3, 0) & np.roll(lm, -3, 0) & np.roll(lm, 3, 1) & np.roll(lm, -3, 1)), (196, 201, 206), 0.9)
-    put(inner_l & (np.hypot(ax - 0.418, y - 0.918) < 0.040), (186, 192, 198), 0.8)   # inner reflector
-    put(inner_l & (np.hypot(ax - 0.418, y - 0.918) < 0.020), (92, 98, 104), 0.8)
-    d = np.hypot(ax - 0.605, y - 0.935)
-    put(outer_l & (d < 0.058), (182, 188, 194), 0.8)                                  # projector bowl
-    put(outer_l & (d < 0.034), (28, 30, 34), 0.9)                                     # projector lens
-    put(outer_l & (d < 0.010), (120, 126, 132), 0.9)
-    put(outer_l & (ax > 0.66) & (ax < 0.73) & (y > 0.86) & (y < 0.99), (172, 178, 184), 0.8)   # low reflector
-    amber = outer_l & (ax > 0.745)
+        put(lm, (168, 174, 180), 0.75)                                             # clear lens over a chrome reflector
+        facets = lm & (np.sin(ax * 260 + np.sin(y * 90) * 2.0) * np.sin(y * 230) > 0.45)
+        col[facets] *= 1.10
+        col[lm] *= np.clip(0.84 + 0.20 * (y[lm] - 0.83) / 0.2, 0.84, 1.04)[:, None]
+        edge = lm & ~(np.roll(lm, 3, 0) & np.roll(lm, -3, 0) & np.roll(lm, 3, 1) & np.roll(lm, -3, 1))
+        put(edge, (112, 117, 122), 0.6)                                            # housing edge
+    d = np.hypot(ax - 0.528, y - 0.912)
+    put(inner_l & (d < 0.050), (196, 201, 206), 0.85)                              # inner lamp reflector
+    put(inner_l & (d < 0.050) & (d > 0.044), (140, 146, 152), 0.85)
+    put(inner_l & (d < 0.016), (150, 156, 162), 0.85)
+    d = np.hypot(ax - 0.718, y - 0.926)
+    put(outer_l & (d < 0.064), (198, 203, 208), 0.85)                              # projector bowl
+    put(outer_l & (d < 0.064) & (d > 0.057), (140, 146, 152), 0.85)
+    put(outer_l & (d < 0.034), (70, 76, 84), 0.95)                                 # projector lens
+    put(outer_l & (d < 0.034) & (ax - 0.718 < -0.008) & (y - 0.926 > 0.008), (150, 158, 166), 0.95)   # glint
+    put(outer_l & (np.abs(ax - 0.826) < 0.005) & (y > 0.84) & (y < 1.03), (200, 205, 210), 0.95)   # divider
+    amber = outer_l & (ax > 0.832) & (y > 0.855) & (y < 1.015)
     put(amber, (214, 124, 34), 0.8)
-    put(amber & (np.abs(ax - 0.835) < 0.004), (180, 100, 25), 0.6)                    # divider in the amber lens
-    # bumper: top edge just under the lamps, a crease, plate in the centre, two-slot intakes, fog lamps
+
+    # bumper
     bump = face & (y < FBUMP_TOP + 0.005)
     put(face & (np.abs(y - FBUMP_TOP) < 0.004), (40, 42, 44), 0.3)
-    put(bump & (np.abs(y - 0.688) < 0.004), (50, 52, 54), 0.3)                         # crease
-    put(bump & (y > 0.69) & (y < 0.78), tuple(int(c * 1.06) for c in CLAD), 0.55)      # crease catches the light
-    plate = bump & (ax < 0.152) & (y > 0.535) & (y < 0.66)
-    put(plate, (232, 232, 226), 0.4)
-    put(plate & ((ax > 0.142) | (y < 0.545) | (y > 0.65)), (60, 60, 64), 0.4)
-    slots = bump & (ax > 0.175) & (ax < 0.435) & (((y > 0.588) & (y < 0.64)) | ((y > 0.525) & (y < 0.575)))
-    put(slots, (12, 13, 14), 0.15)
-    put(slots & ((np.sin(ax * 200) * np.sin(y * 200 + ax * 90)) > 0.45), (44, 46, 49), 0.4)
-    fog = bump & (ax > 0.475) & (ax < 0.745) & (y > 0.535) & (y < 0.625)
-    put(fog, (60, 62, 64), 0.4)
-    fogl = bump & (ax > 0.485) & (ax < 0.735) & (y > 0.545) & (y < 0.615)
-    put(fogl, (150, 156, 162), 0.8)
-    put(fogl & (np.hypot((ax - 0.62) / 1.3, y - 0.58) < 0.026), (196, 200, 205), 0.9)
-    put(bump & (y < 0.47), TRIM, 0.25)
+    put(bump & (y > 0.69) & (y < 0.785), tuple(int(c * 1.07) for c in CLAD), 0.55)     # upper bulge catches the light
+    put(bump & (np.abs(y - 0.684) < 0.004), (48, 50, 52), 0.3)
+    put(bump & (ax < 0.205) & (y > 0.475) & (y < 0.655), (44, 46, 48), 0.3)            # plate recess
+    plate = bump & (ax < 0.163) & (y > 0.49) & (y < 0.645)
+    put(plate, (196, 200, 204), 0.4)
+    put(plate & ((ax > 0.153) | (y < 0.50) | (y > 0.635)), (60, 60, 64), 0.4)
+    def slot(y0, y1):
+        r = (y1 - y0) / 2; cy = (y0 + y1) / 2
+        core = (ax > 0.27 + r) & (ax < 0.59) & (y > y0) & (y < y1)
+        cap = np.hypot(ax - (0.27 + r), y - cy) < r
+        return bump & (core | cap)
+    s1, s2 = slot(0.602, 0.646), slot(0.552, 0.596)
+    put(bump & (ax > 0.262) & (ax < 0.598) & (y > 0.544) & (y < 0.654), (30, 31, 33), 0.25)   # intake surround
+    for sl in (s1, s2):
+        put(sl, (8, 9, 10), 0.15)
+    fog = bump & (ax > 0.612) & (ax < 0.892) & (y > 0.552) & (y < 0.652)
+    put(fog, (62, 64, 66), 0.4)
+    fogl = bump & (ax > 0.622) & (ax < 0.882) & (y > 0.560) & (y < 0.644)
+    put(fogl, (176, 172, 158), 0.85)                                                 # clear lens, slightly warm
+    put(fogl & (np.hypot(ax - 0.705, y - 0.602) < 0.028), (214, 216, 218), 0.9)        # bulb
+    put(fogl & (ax > 0.80), (196, 150, 90), 0.85)                                     # amber-tinted outer end
+    put(bump & (y < 0.445), TRIM, 0.25)
 
     # ---- rear face: liftgate glass over a lower tailgate, LEXUS garnish, corner lamps, gray bumper
     back = z < Z_TAIL + 0.12
@@ -468,7 +484,7 @@ def add_badges(tex):
     def lexus_l(cx, cy, sc):  # the Lexus "L" in an oval
         d.ellipse([cx - sc, cy - 0.72 * sc, cx + sc, cy + 0.72 * sc], outline=CHROME, width=max(1, int(0.14 * sc)))
         d.line([(cx - 0.32 * sc, cy - 0.5 * sc), (cx - 0.32 * sc, cy + 0.42 * sc), (cx + 0.5 * sc, cy + 0.42 * sc)], fill=CHROME, width=max(1, int(0.14 * sc)))
-    ex, ey = to_px("front", 0.0, 0.985); lexus_l(ex, ey, 27)
+    ex, ey = to_px("front", 0.0, 0.944); lexus_l(ex, ey, 34)
     ex, ey = to_px("rear", 0.0, 1.16); lexus_l(ex, ey, 16)
     sx, sy = to_px("rear", -0.55, 1.12)
     d.text((sx, sy), "LX470", font=ImageFont.truetype(FONT_B, 13), fill=CHROME, anchor="mm")
