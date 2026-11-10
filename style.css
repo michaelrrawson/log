@@ -139,7 +139,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .gallery>.drop{flex:1 1 200px}
 .ph{position:relative;background:var(--tile);overflow:hidden}
 .ph img,.ph video{width:100%;height:100%;object-fit:contain;display:block}
-.ph img{cursor:zoom-in;transition:transform .35s ease}
+.ph img{cursor:pointer;transition:transform .35s ease}
 .ph video{background:#000}
 .ph:hover img{transform:scale(1.03)}
 .ph .x{position:absolute;top:8px;right:8px;background:var(--bg);padding:3px 7px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;opacity:0;transition:opacity .2s}
