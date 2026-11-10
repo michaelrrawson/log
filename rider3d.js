@@ -169,13 +169,13 @@
       const FA=1.6, RA=-1.2, R=.43, AR=.5, AY=.43;   // axles, tire radius, wheel-arch radius and height
       const arch=c=>s=>{ s.lineTo(c+AR,AY); s.absarc(c,AY,AR,0,Math.PI,false); };
       // lower body up to the beltline, with hood, blunt nose and arch cut-outs
-      side([[2.3,.46],arch(FA),[RA+AR,AY],arch(RA),[-2.34,.5],[-2.4,.6],[-2.4,1.37],[1.0,1.31],[1.2,1.25],[2.25,1.22],[2.4,1.16],[2.43,.62]], 1.82, P, .045);
+      side([[2.3,.46],arch(FA),[RA+AR,AY],arch(RA),[-2.34,.5],[-2.4,.6],[-2.4,1.37],[1.16,1.31],[1.38,1.27],[2.25,1.27],[2.42,1.23],[2.43,.62]], 1.82, P, .045);
       // greenhouse: narrower than the body, upright windshield, nearly vertical tailgate
-      side([[-2.36,1.29],[-2.31,1.76],[-2.2,1.82],[.5,1.83],[1.18,1.24],[1.0,1.29]], 1.7, P, .035);
+      side([[-2.36,1.29],[-2.31,1.76],[-2.2,1.82],[.66,1.83],[1.36,1.26],[1.16,1.29]], 1.7, P, .035);
       // side glass: one blacked-out band (black pillars, like the real thing) with the rear quarter window kicking up over the rear wheel
-      side([[1.0,1.35],[.46,1.79],[-1.9,1.79],[-2.0,1.73],[-2.02,1.56],[-1.6,1.42]], 1.79, G);
+      side([[1.16,1.35],[.62,1.79],[-1.9,1.79],[-2.0,1.73],[-2.02,1.56],[-1.6,1.42]], 1.79, G);
       const BLK=mat(0x0c0d0f);
-      const ws=mesh(new T.PlaneGeometry(1.5,.86), G); ws.position.set(0,1.6,.875); ws.rotation.x=-.93; add(ws);   // windshield
+      const ws=mesh(new T.PlaneGeometry(1.5,.86), G); ws.position.set(0,1.57,1.045); ws.rotation.x=-.89; add(ws);   // windshield
       const rw=mesh(new T.PlaneGeometry(1.36,.44), G); rw.position.set(0,1.55,-2.405); rw.rotation.set(-.1,Math.PI,0); add(rw);  // rear glass
       box(1.6,.2,4,D, 0,.36,0);   // dark underbody, so the arches don't look hollow
       for(const x of [1,-1]){
@@ -184,14 +184,14 @@
         box(.04,.04,2.3,S, x*.82,1.89,-.8);   // silver roof rails
         for(const z of [-1.9,.3]) box(.05,.06,.08,S, x*.82,1.86,z);
         box(.16,.05,1.7,S, x*.98,.45,.2);                // silver running boards
-        box(.2,.14,.09,P, x*.95,1.42,.98);   // body-colour mirrors
+        box(.2,.14,.09,P, x*.95,1.42,1.14);   // body-colour mirrors
         for(const z of [.05,-.95]) box(.02,.035,.15,S, x*.92,1.18,z);   // chrome door handles
         box(.02,.42,.1,BLK, x*.9,1.56,-.55); { const c=box(.02,.46,.11,BLK, x*.9,1.56,-1.46); c.rotation.x=-.45; }   // black B pillar, slanted C pillar
         box(.03,.035,1.74,S, x*.92,.56,.2);                 // chrome strip along the bottom of the doors
         // tall taillights at the rear corners, wrapping onto the sides
         box(.22,.42,.06,RED, x*.8,1.13,-2.42); box(.03,.38,.22,RED, x*.91,1.13,-2.33);
         // big headlights, upswept toward the fenders, amber at the outer end
-        const hl=new T.Group(); hl.position.set(x*.69,1.01,2.44); hl.rotation.set(0,x*.38,x*.12); add(hl);
+        const hl=new T.Group(); hl.position.set(x*.69,1.08,2.44); hl.rotation.set(0,x*.38,x*.12); add(hl);
         hl.add(mesh(new T.BoxGeometry(.44,.19,.08), LENS));
         const am=mesh(new T.BoxGeometry(.08,.11,.085), AMB); am.position.x=x*.19; hl.add(am);
         for(const o of [-.07,.07]){ const pr=mesh(new T.CylinderGeometry(.045,.045,.09,12), S); pr.rotation.x=Math.PI/2; pr.position.x=x*o-x*.03; hl.add(pr); }
@@ -200,9 +200,9 @@
       }
       // upper grille: dark mesh, tapering down, with one wide chrome bar across the top carrying the Toyota emblem
       const trap=(tw,bw,top,bot)=>{ const s=new T.Shape(); s.moveTo(-tw/2,top); s.lineTo(tw/2,top); s.lineTo(bw/2,bot); s.lineTo(-bw/2,bot); s.closePath(); return s; };
-      const gD=mesh(new T.ExtrudeGeometry(trap(1.0,.8,1.1,.84),{depth:.06,bevelEnabled:false}), D); gD.position.z=2.42; add(gD);
-      box(.98,.05,.03,S, 0,1.04,2.49);
-      const emb=new T.Group(); emb.position.set(0,1.04,2.51); add(emb);
+      const gD=mesh(new T.ExtrudeGeometry(trap(1.0,.8,1.18,.82),{depth:.06,bevelEnabled:false}), D); gD.position.z=2.42; add(gD);
+      box(.98,.05,.03,S, 0,1.11,2.49);
+      const emb=new T.Group(); emb.position.set(0,1.11,2.51); add(emb);
       for(const [rx,ry,t,y] of [[.12,.08,.12,0],[.043,.068,.18,0],[.084,.035,.2,.035]]){ const o=mesh(new T.TorusGeometry(1,t,6,24), S); o.scale.set(rx,ry,.03); o.position.y=y; emb.add(o); }
       // body-colour bumper framing a wide lower mesh intake, thin chrome strip along the bottom
       box(1.9,.36,.24,P, 0,.66,2.34);
