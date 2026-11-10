@@ -151,73 +151,85 @@
           H[k+"Foot"].rotation.x = -(H[k+"Thigh"].rotation.x+H[k+"Shin"].rotation.x); }
       };
     }
-    else if(type==="4runner"){ // 2012 Toyota 4Runner (5th gen), Magnetic Gray with silver trim; the figure drives from the left seat (+X)
-      const car=new T.Group(); car.scale.setScalar(.78); root.add(car);  // a bit smaller than life next to the walkers
-      const P=new T.MeshPhongMaterial({ color:0x666a6f, shininess:70, specular:0x8a8f96 });   // gray metallic paint
-      const S=new T.MeshPhongMaterial({ color:0xd2d6db, shininess:110, specular:0xffffff });  // silver / chrome trim
-      const G=new T.MeshPhongMaterial({ color:0x161b20, shininess:90, specular:0x9aa4ad, transparent:true, opacity:.62, side:T.DoubleSide }); // tinted glass
-      const D=mat(0x2a2c30), RED=new T.MeshPhongMaterial({ color:0xb3121b, shininess:80 }), AMB=mat(0xe39a2a);
-      const box=(w,h,l,m,x,y,z)=>{ const b=mesh(new T.BoxGeometry(w,h,l),m); b.position.set(x,y,z); car.add(b); return b; };
-      const R=.34, W=1.24, front=1.45, back=-1.45;
-      box(W,.5,2.9,P, 0,.62,0);                         // lower body
-      box(W-.04,.12,.8,P, 0,.93,1.04);                  // hood
-      box(.34,.06,.34,P, 0,1.01,.95); box(.3,.012,.02,S, 0,1.03,1.12);  // hood scoop with a silver lip
-      box(W-.06,.53,1.7,G, 0,1.135,-.59);                // side and rear glass
-      box(W-.02,.07,1.78,P, 0,1.405,-.56);              // roof
-      const ws=mesh(new T.PlaneGeometry(W-.1,.59), G); ws.position.set(0,1.195,.455); ws.rotation.x=-.785; car.add(ws); // raked windshield
-      for(const x of [.6,-.6]){
-        car.add(tube([x*.97,.99,.66],[x*.97,1.40,.25],.035,P));   // A-pillars
-        box(.05,.5,.08,P, x*1.02,1.12,-.22);            // B-pillar
-        box(.05,.5,.22,P, x*1.02,1.12,-1.33);           // thick C/D pillar
-        car.add(tube([x*.82,1.47,-1.32],[x*.82,1.47,.22],.022,S));  // silver roof rails
-        car.add(tube([x*.82,1.44,-1.3],[x*.82,1.47,-1.28],.02,S), tube([x*.82,1.44,.2],[x*.82,1.47,.18],.02,S));
-        box(.04,.04,2.1,S, x*1.02,.66,-.12);            // silver body-side strip
-        box(.14,.04,1.3,S, x*1.07,.42,-.12);            // silver running boards
-        box(.1,.08,.14,S, x*1.1,1.02,.36);              // silver mirrors
-        box(.06,.3,.05,RED, x*.94,.98,back-.005);       // tall taillights
-        for(const z of [.92,-.92]) box(.1,.08,.86,D, x*1.05,.88,z); // fender flares
-      }
-      // 5th-gen face: tapered grille in a chrome surround, Toyota emblem, headlights sweeping up and back into the fenders
-      const trap=(tw,bw,top,bot)=>{ const s=new T.Shape(); s.moveTo(-tw/2,top); s.lineTo(tw/2,top); s.lineTo(bw/2,bot); s.lineTo(-bw/2,bot); s.closePath(); return s; };
-      const gS=mesh(new T.ExtrudeGeometry(trap(.74,.6,.95,.6),{depth:.03,bevelEnabled:false}), S); gS.position.z=front; car.add(gS);
-      const gD=mesh(new T.ExtrudeGeometry(trap(.68,.54,.92,.63),{depth:.04,bevelEnabled:false}), D); gD.position.z=front; car.add(gD);
-      for(const y of [.85,.77,.69]) box(.54+(y-.63)*.45,.018,.02,S, 0,y,front+.045);  // horizontal grille bars
-      const emb=new T.Group(); emb.position.set(0,.81,front+.06); car.add(emb);       // Toyota emblem: three ovals
-      const oval=(rx,ry,t)=>{ const o=mesh(new T.TorusGeometry(1,t,6,24), S); o.scale.set(rx,ry,.03); emb.add(o); return o; };
-      oval(.075,.05,.12); oval(.026,.042,.18); oval(.052,.022,.2).position.y=.022;
+    else if(type==="4runner"){ // 2012 Toyota 4Runner (5th gen), Magnetic Gray with silver trim. Built at true size in meters
+      // from its side silhouette (tall beltline, kicked-up rear quarter window, thick D-pillar, square flared arches), then shrunk.
+      // Car faces +Z; +X is the driver's (left) side.
+      const car=new T.Group(); car.scale.setScalar(.37); root.add(car);
+      const P=new T.MeshPhongMaterial({ color:0x6b6f74, shininess:60, specular:0x7d838a });   // Magnetic Gray metallic
+      const S=new T.MeshPhongMaterial({ color:0xd4d8dd, shininess:110, specular:0xffffff });  // silver / chrome
+      const G=new T.MeshPhongMaterial({ color:0x14191e, shininess:100, specular:0x8f9aa4, side:T.DoubleSide, transparent:true, opacity:.8 }); // tinted glass
+      const D=mat(0x26282c), RED=new T.MeshPhongMaterial({ color:0xb01019, shininess:80 }), AMB=mat(0xe39a2a);
+      const LENS=new T.MeshPhongMaterial({ color:0xe4ebf1, shininess:120, specular:0xffffff });
+      const add=o=>{ car.add(o); return o; };
+      const box=(w,h,l,m,x,y,z)=>{ const b=mesh(new T.BoxGeometry(w,h,l),m); b.position.set(x,y,z); return add(b); };
+      // extrude a side-view outline (pts as [z,y]) across the car, centred, `width` wide
+      const side=(pts, width, m, bev=0)=>{ const s=new T.Shape(); s.moveTo(...pts[0]); for(const p of pts.slice(1)) Array.isArray(p)?s.lineTo(...p):p(s);
+        const g=new T.ExtrudeGeometry(s,{ depth:width-2*bev, bevelEnabled:bev>0, bevelThickness:bev, bevelSize:bev*.8, bevelSegments:2, curveSegments:10 });
+        g.translate(0,0,-(width-2*bev)/2); const o=mesh(g,m); o.rotation.y=-Math.PI/2; return add(o); };
+      const FA=1.42, RA=-1.37, R=.39, AR=.5, AY=.43;   // axles, tire radius, wheel-arch radius and height
+      const arch=c=>s=>{ s.lineTo(c+AR,AY); s.absarc(c,AY,AR,0,Math.PI,false); };
+      // lower body up to the beltline, with hood, blunt nose and arch cut-outs
+      side([[2.3,.46],arch(FA),[RA+AR,AY],arch(RA),[-2.34,.5],[-2.4,.6],[-2.4,1.31],[.95,1.31],[2.18,1.22],[2.38,1.13],[2.41,.62]], 1.82, P, .045);
+      // greenhouse: narrower than the body, upright windshield, nearly vertical tailgate
+      side([[-2.36,1.29],[-2.31,1.76],[-2.2,1.82],[.02,1.83],[.93,1.3]], 1.6, P, .035);
+      // side glass: front door, rear door, and the signature rear quarter window that kicks up over the rear wheel
+      const dlo=[ [[.8,1.34],[.08,1.75],[-.54,1.75],[-.54,1.35]],
+                  [[-.64,1.35],[-.64,1.75],[-1.44,1.75],[-1.44,1.36]],
+                  [[-1.54,1.36],[-1.54,1.75],[-2.12,1.74],[-2.14,1.57],[-1.9,1.55],[-1.76,1.39]] ];
+      for(const w of dlo) side(w, 1.69, G);
+      const ws=mesh(new T.PlaneGeometry(1.42,.98), G); ws.position.set(0,1.6,.5); ws.rotation.x=-1.05; add(ws);   // windshield
+      const rw=mesh(new T.PlaneGeometry(1.3,.38), G); rw.position.set(0,1.56,-2.405); rw.rotation.set(-.1,Math.PI,0); add(rw);  // rear glass
+      box(1.6,.2,4,D, 0,.36,0);   // dark underbody, so the arches don't look hollow
       for(const x of [1,-1]){
-        const hl=new T.Group(); hl.position.set(x*.5,.87,front-.035); hl.rotation.set(0,x*.38,x*.14); car.add(hl);
-        const lens=mesh(new T.BoxGeometry(.26,.09,.06), new T.MeshPhongMaterial({ color:0xdfe6ec, shininess:120, specular:0xffffff })); hl.add(lens);
-        const amber=mesh(new T.BoxGeometry(.07,.05,.065), AMB); amber.position.x=x*.1; amber.position.y=-.02; hl.add(amber);
-        const brow=mesh(new T.BoxGeometry(.27,.02,.065), S); brow.position.y=.055; hl.add(brow);
-        const fog=mesh(new T.CylinderGeometry(.04,.04,.03,12), mat(0xf6f1d8)); fog.rotation.x=Math.PI/2; fog.position.set(x*.47,.44,front+.07); car.add(fog);
-        const fogB=mesh(new T.BoxGeometry(.14,.07,.02), D); fogB.position.set(x*.47,.44,front+.06); car.add(fogB);
-        // the 4Runner's kicked-up rear quarter window: paint rises over the rear wheel
-        box(.03,.15,.5,P, x*.605,.95,-1.19);
-        const kick=mesh(new T.BoxGeometry(.03,.15,.2), P); kick.position.set(x*.605,.92,-.88); kick.rotation.x=-.5; car.add(kick);
+        for(const c of [FA,RA]){ // squared-off fender flares
+          const f=mesh(new T.TorusGeometry(AR+.03,.055,4,14,Math.PI), P); f.scale.set(1,1,1.4); f.rotation.y=Math.PI/2; f.position.set(x*.93,AY,c); add(f); }
+        box(.04,.04,1.85,S, x*.82,1.89,-1.0);   // silver roof rails
+        for(const z of [-1.9,-.1]) box(.05,.06,.08,S, x*.82,1.86,z);
+        box(.16,.05,1.55,S, x*.98,.45,.03);                // silver running boards
+        const mir=box(.18,.13,.08,P, x*.92,1.39,.72); box(.012,.11,.06,S, x*1.01,1.39,.72);   // mirrors with silver caps
+        for(const z of [.05,-.95]) box(.02,.035,.15,S, x*.92,1.18,z);   // chrome door handles
+        box(.03,.04,2.6,S, x*.92,.74,-.15);                 // silver lower body-side trim
+        // tall wrap-around taillights
+        box(.24,.36,.06,RED, x*.78,1.08,-2.42); box(.03,.32,.2,RED, x*.91,1.08,-2.34);
+        // headlights that sweep back into the fenders, with an amber corner
+        const hl=new T.Group(); hl.position.set(x*.66,.99,2.42); hl.rotation.set(0,x*.42,x*.1); add(hl);
+        const lens=mesh(new T.BoxGeometry(.46,.15,.08), LENS); hl.add(lens);
+        const am=mesh(new T.BoxGeometry(.1,.08,.085), AMB); am.position.set(x*.16,-.02,0); hl.add(am);
+        const brow=mesh(new T.BoxGeometry(.47,.03,.085), S); brow.position.y=.085; hl.add(brow);
+        const fog=mesh(new T.CylinderGeometry(.06,.06,.04,12), mat(0xf6f1d8)); fog.rotation.x=Math.PI/2; fog.position.set(x*.68,.56,2.475); add(fog);
+        box(.24,.11,.03,D, x*.68,.56,2.465);
       }
-      box(W+.02,.2,.16,P, 0,.43,front-.02);             // front bumper
-      box(.64,.07,.12,S, 0,.33,front-.04);              // silver skid plate
-      box(W+.02,.18,.14,P, 0,.45,back+.02);             // rear bumper
-      box(.5,.05,.06,S, 0,.84,back-.01);                // silver tailgate garnish
+      // big tapered grille with a chrome surround and three bars, Toyota emblem in the middle
+      const trap=(tw,bw,top,bot)=>{ const s=new T.Shape(); s.moveTo(-tw/2,top); s.lineTo(tw/2,top); s.lineTo(bw/2,bot); s.lineTo(-bw/2,bot); s.closePath(); return s; };
+      const gS=mesh(new T.ExtrudeGeometry(trap(.98,.84,1.08,.7),{depth:.05,bevelEnabled:false}), S); gS.position.z=2.4; add(gS);
+      const gD=mesh(new T.ExtrudeGeometry(trap(.9,.76,1.04,.74),{depth:.07,bevelEnabled:false}), D); gD.position.z=2.4; add(gD);
+      for(const y of [.98,.89,.8]) box(.74+(y-.74)*.5,.035,.03,S, 0,y,2.475);
+      const emb=new T.Group(); emb.position.set(0,.9,2.5); add(emb);
+      for(const [rx,ry,t,y] of [[.11,.075,.12,0],[.04,.063,.18,0],[.078,.033,.2,.033]]){ const o=mesh(new T.TorusGeometry(1,t,6,24), S); o.scale.set(rx,ry,.03); o.position.y=y; emb.add(o); }
+      box(1.9,.24,.24,P, 0,.56,2.34);                      // front bumper
+      box(.92,.12,.04,D, 0,.55,2.47);                      // lower intake
+      box(.86,.08,.18,S, 0,.43,2.36);                      // silver skid plate
+      box(.58,.05,.05,S, 0,1.36,1.87);                     // hood scoop lip
+      { const sc=box(.6,.08,.5,P, 0,1.32,1.62); sc.rotation.x=.07; }   // hood scoop
+      box(1.9,.22,.2,P, 0,.58,-2.36);                      // rear bumper
+      box(.9,.06,.05,S, 0,1.18,-2.43);                     // silver tailgate garnish
       { const cv=document.createElement("canvas"); cv.width=256; cv.height=40; const g=cv.getContext("2d");   // 4RUNNER lettering on the tailgate
         g.fillStyle="#d8dce0"; g.font="bold 30px Arial, sans-serif"; g.textAlign="center"; g.textBaseline="middle"; g.fillText("4RUNNER",128,22);
-        const name=mesh(new T.PlaneGeometry(.42,.066), new T.MeshBasicMaterial({ map:new T.CanvasTexture(cv), transparent:true }));
-        name.position.set(0,.74,back-.012); name.rotation.y=Math.PI; car.add(name);
-        const emR=new T.Group(); emR.position.set(0,.92,back-.012); emR.rotation.y=Math.PI; car.add(emR);
-        for(const [rx,ry,t,y] of [[.06,.04,.12,0],[.021,.034,.18,0],[.042,.018,.2,.018]]){ const o=mesh(new T.TorusGeometry(1,t,6,24), S); o.scale.set(rx,ry,.03); o.position.y=y; emR.add(o); } }
-      box(.9,.36,.02,G, 0,1.12,back+.04);               // rear window
-      // wheels: black tires with silver six-spoke alloys
+        const name=mesh(new T.PlaneGeometry(.62,.1), new T.MeshBasicMaterial({ map:new T.CanvasTexture(cv), transparent:true }));
+        name.position.set(0,1.0,-2.452); name.rotation.y=Math.PI; add(name);
+        const emR=new T.Group(); emR.position.set(0,1.26,-2.45); emR.rotation.y=Math.PI; add(emR);
+        for(const [rx,ry,t,y] of [[.08,.054,.12,0],[.029,.045,.18,0],[.056,.024,.2,.024]]){ const o=mesh(new T.TorusGeometry(1,t,6,24), S); o.scale.set(rx,ry,.03); o.position.y=y; emR.add(o); } }
+      // wheels: black all-terrain tires with silver six-spoke alloys
       const wheels=[];
-      for(const x of [.56,-.56]) for(const z of [.92,-.92]){ const w=new T.Group(); w.position.set(x,R,z); car.add(w);
-        const t=mesh(new T.CylinderGeometry(R,R,.26,20), M.tire); t.rotation.z=Math.PI/2; w.add(t);
-        for(let i=0;i<8;i++){ const lug=mesh(new T.BoxGeometry(.27,.035,.07), M.tire); const a=i*Math.PI/4; lug.position.set(0,Math.cos(a)*R,Math.sin(a)*R); lug.rotation.x=-a; w.add(lug); }
-        const side=Math.sign(x), rim=mesh(new T.CylinderGeometry(R*.62,R*.62,.02,18), S); rim.rotation.z=Math.PI/2; rim.position.x=side*.132; w.add(rim);
-        for(let i=0;i<6;i++){ const sp=mesh(new T.BoxGeometry(.02,.05,R*1.1), D); const a=i*Math.PI/3+Math.PI/6; sp.position.x=side*.14; sp.rotation.x=a; w.add(sp); }
-        const cap=mesh(new T.CylinderGeometry(.05,.05,.03,10), S); cap.rotation.z=Math.PI/2; cap.position.x=side*.15; w.add(cap);
+      for(const x of [.8,-.8]) for(const z of [FA,RA]){ const w=new T.Group(); w.position.set(x,R,z); add(w);
+        const t=mesh(new T.CylinderGeometry(R,R,.28,22), M.tire); t.rotation.z=Math.PI/2; w.add(t);
+        for(let i=0;i<10;i++){ const lug=mesh(new T.BoxGeometry(.29,.05,.09), M.tire); const a=i*Math.PI/5; lug.position.set(0,Math.cos(a)*R,Math.sin(a)*R); lug.rotation.x=-a; w.add(lug); }
+        const sd=Math.sign(x), rim=mesh(new T.CylinderGeometry(R*.64,R*.64,.02,20), S); rim.rotation.z=Math.PI/2; rim.position.x=sd*.142; w.add(rim);
+        for(let i=0;i<6;i++){ const sp=mesh(new T.BoxGeometry(.02,.07,R*1.12), D); sp.position.x=sd*.15; sp.rotation.x=i*Math.PI/3+Math.PI/6; w.add(sp); }
+        const cap=mesh(new T.CylinderGeometry(.07,.07,.03,12), S); cap.rotation.z=Math.PI/2; cap.position.x=sd*.16; w.add(cap);
         wheels.push(w); }
       // driver, seen through the glass
-      const H=human({legs:false}); H.root.scale.setScalar(.8); car.add(H.root); H.pelvis.position.set(.29,.74,-.12);
+      const H=human({legs:false}); car.add(H.root); H.pelvis.position.set(.4,.98,-.2);
       H.lArm.rotation.x = H.rArm.rotation.x = -.95; H.lFore.rotation.x = H.rFore.rotation.x = -.5;
       let p=0;
       tick=(dt,m)=>{ const v=Math.min(2,m); p += dt*v;
