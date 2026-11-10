@@ -16,7 +16,7 @@ const REPLAY_FIGS = {
   ski:'<circle cx="14" cy="4" r="2" class="f"/><path d="M13 7l-3 5M10 12l2 3-1 3M10 12l-2 3-1 3M3 18.5l13 2.5M12 8l3 3 1 5"/>',
   climb:_hiker,
   water:'<path d="M3 16c3 2 15 2 18 0" /><circle cx="12" cy="7" r="2" class="f"/><path d="M12 10v4M6 8l12 10"/>',
-  offroad:'<path d="M2 15v-4h4l2-4h7l2 4h4v4zM8 7v4M15 7v4"/><circle cx="6.5" cy="16.5" r="2.5" class="f"/><circle cx="17.5" cy="16.5" r="2.5" class="f"/>',
+  offroad:'<path d="M2 16v-4l2-1 3-4h9l3 4h2v5zM7 7v4M12 7v4M2 12h20"/><circle cx="6.5" cy="16.5" r="2.5" class="f"/><circle cx="17.5" cy="16.5" r="2.5" class="f"/>',
 };
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const STYLES = { satellite:"mapbox://styles/mapbox/satellite-streets-v12", terrain:"mapbox://styles/mapbox/outdoors-v12" };

@@ -4,7 +4,7 @@
 // Model units are meters, origin at the feet, facing +Z, up +Y.
 (function(){
   const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js";
-  const KINDS = { hike:"hiker", climb:"hiker", backpacking:"backpacker", trailrun:"runner", bike:"cyclist", mtb:"cyclist", ski:"skier", water:"paddler", offroad:"jeep" };
+  const KINDS = { hike:"hiker", climb:"hiker", backpacking:"backpacker", trailrun:"runner", bike:"cyclist", mtb:"cyclist", ski:"skier", water:"paddler", offroad:"4runner" };
   const ACCENT = 0x2f9bff, SCREEN_PX = 46; // figure height on screen, in pixels
   // Outfits for the figure. Pick one with replayOutfit in config.js.
   const OUTFITS = {
@@ -151,43 +151,57 @@
           H[k+"Foot"].rotation.x = -(H[k+"Thigh"].rotation.x+H[k+"Shin"].rotation.x); }
       };
     }
-    else if(type==="jeep"){ // open-top 4x4 on chunky tires, the figure at the wheel (driver's seat on the left, +X)
+    else if(type==="4runner"){ // 2012 Toyota 4Runner (5th gen), Magnetic Gray with silver trim; the figure drives from the left seat (+X)
       const car=new T.Group(); root.add(car);
-      const paint=M.accent, R=.36, TW=.27;
+      const P=new T.MeshPhongMaterial({ color:0x666a6f, shininess:70, specular:0x8a8f96 });   // gray metallic paint
+      const S=new T.MeshPhongMaterial({ color:0xd2d6db, shininess:110, specular:0xffffff });  // silver / chrome trim
+      const G=new T.MeshPhongMaterial({ color:0x161b20, shininess:90, specular:0x9aa4ad, transparent:true, opacity:.62, side:T.DoubleSide }); // tinted glass
+      const D=mat(0x2a2c30), RED=new T.MeshPhongMaterial({ color:0xb3121b, shininess:80 }), AMB=mat(0xe39a2a);
       const box=(w,h,l,m,x,y,z)=>{ const b=mesh(new T.BoxGeometry(w,h,l),m); b.position.set(x,y,z); car.add(b); return b; };
-      box(1.3,.42,2.5,paint, 0,.66,0);              // tub
-      box(1.24,.16,.95,paint, 0,.95,.72);            // hood
-      box(1.36,.14,.12,M.dark, 0,.5,1.3);            // front bumper
-      box(1.36,.14,.12,M.dark, 0,.5,-1.3);           // rear bumper
-      box(.9,.26,.03,M.dark, 0,.8,1.265);            // grille
-      for(const x of [.42,-.42]){ const lamp=mesh(new T.CylinderGeometry(.075,.075,.04,12), M.helmet); lamp.rotation.x=Math.PI/2; lamp.position.set(x,.83,1.27); car.add(lamp); }
-      for(const x of [.66,-.66]) for(const z of [.85,-.85]){ const f=mesh(new T.BoxGeometry(.14,.06,.82), M.dark); f.position.set(x*1.04,.92,z); car.add(f); } // fender flares
-      // windshield frame and roll bar
-      const ws=[[.6,.88,.24],[.6,1.38,.12],[-.6,1.38,.12],[-.6,.88,.24]];
-      car.add(tube(ws[0],ws[1],.025,M.dark), tube(ws[1],ws[2],.025,M.dark), tube(ws[2],ws[3],.025,M.dark));
-      const glass=mesh(new T.PlaneGeometry(1.15,.48), new T.MeshPhongMaterial({ color:0x9fc7e6, transparent:true, opacity:.35, side:T.DoubleSide })); glass.position.set(0,1.13,.18); glass.rotation.x=-.24; car.add(glass);
-      for(const x of [.6,-.6]) car.add(tube([x,.88,-.55],[x,1.42,-.5],.03,M.dark), tube([x,1.42,-.5],[x,1.38,.12],.022,M.dark));
-      car.add(tube([.6,1.42,-.5],[-.6,1.42,-.5],.03,M.dark));
-      for(let i=-1;i<=1;i++){ const l=mesh(new T.BoxGeometry(.12,.06,.05), M.helmet); l.position.set(i*.2,1.45,.12); car.add(l); } // roof light bar
-      // seats
-      for(const x of [.3,-.3]){ box(.42,.1,.42,M.dark, x,.88,-.1); box(.42,.48,.08,M.dark, x,1.1,-.33); }
-      // wheels
+      const R=.34, W=1.24, front=1.45, back=-1.45;
+      box(W,.5,2.9,P, 0,.62,0);                         // lower body
+      box(W-.04,.12,.8,P, 0,.93,1.04);                  // hood
+      box(.34,.06,.34,P, 0,1.01,.95); box(.3,.012,.02,S, 0,1.03,1.12);  // hood scoop with a silver lip
+      box(W-.06,.53,1.7,G, 0,1.135,-.59);                // side and rear glass
+      box(W-.02,.07,1.78,P, 0,1.405,-.56);              // roof
+      const ws=mesh(new T.PlaneGeometry(W-.1,.59), G); ws.position.set(0,1.195,.455); ws.rotation.x=-.785; car.add(ws); // raked windshield
+      for(const x of [.6,-.6]){
+        car.add(tube([x*.97,.99,.66],[x*.97,1.40,.25],.035,P));   // A-pillars
+        box(.05,.5,.08,P, x*1.02,1.12,-.22);            // B-pillar
+        box(.05,.5,.22,P, x*1.02,1.12,-1.33);           // thick C/D pillar
+        car.add(tube([x*.82,1.47,-1.32],[x*.82,1.47,.22],.022,S));  // silver roof rails
+        car.add(tube([x*.82,1.44,-1.3],[x*.82,1.47,-1.28],.02,S), tube([x*.82,1.44,.2],[x*.82,1.47,.18],.02,S));
+        box(.04,.04,2.1,S, x*1.02,.66,-.12);            // silver body-side strip
+        box(.14,.04,1.3,S, x*1.07,.42,-.12);            // silver running boards
+        box(.1,.08,.14,S, x*1.1,1.02,.36);              // silver mirrors
+        box(.26,.1,.05,mat(0xf2f4f6), x*.66,.86,front+.005); // headlights
+        box(.08,.05,.05,AMB, x*.88,.82,front+.004);
+        box(.06,.3,.05,RED, x*.94,.98,back-.005);       // tall taillights
+        for(const z of [.92,-.92]) box(.1,.08,.86,D, x*1.05,.88,z); // fender flares
+      }
+      box(.78,.26,.04,D, 0,.78,front+.01);              // grille
+      box(.82,.035,.05,S, 0,.92,front+.02); box(.82,.035,.05,S, 0,.64,front+.02); box(.62,.025,.05,S, 0,.78,front+.03); // chrome grille bars
+      box(W+.02,.2,.16,P, 0,.43,front-.02);             // front bumper
+      box(.64,.07,.12,S, 0,.33,front-.04);              // silver skid plate
+      box(W+.02,.18,.14,P, 0,.45,back+.02);             // rear bumper
+      box(.5,.05,.06,S, 0,.84,back-.01);                // silver tailgate garnish
+      box(.9,.36,.02,G, 0,1.12,back+.04);               // rear window
+      // wheels: black tires with silver six-spoke alloys
       const wheels=[];
-      for(const x of [.66,-.66]) for(const z of [.85,-.85]){ const w=new T.Group(); w.position.set(x,R,z); car.add(w);
-        const t=mesh(new T.CylinderGeometry(R,R,TW,18), M.tire); t.rotation.z=Math.PI/2; w.add(t);
-        const hub=mesh(new T.CylinderGeometry(R*.5,R*.5,TW+.01,10), M.metal); hub.rotation.z=Math.PI/2; w.add(hub);
-        for(let i=0;i<6;i++){ const lug=mesh(new T.BoxGeometry(TW+.02,.06,.09), M.tire); const a=i*Math.PI/3; lug.position.set(0,Math.cos(a)*R,Math.sin(a)*R); lug.rotation.x=-a; w.add(lug); } // tread blocks
+      for(const x of [.56,-.56]) for(const z of [.92,-.92]){ const w=new T.Group(); w.position.set(x,R,z); car.add(w);
+        const t=mesh(new T.CylinderGeometry(R,R,.26,20), M.tire); t.rotation.z=Math.PI/2; w.add(t);
+        for(let i=0;i<8;i++){ const lug=mesh(new T.BoxGeometry(.27,.035,.07), M.tire); const a=i*Math.PI/4; lug.position.set(0,Math.cos(a)*R,Math.sin(a)*R); lug.rotation.x=-a; w.add(lug); }
+        const side=Math.sign(x), rim=mesh(new T.CylinderGeometry(R*.62,R*.62,.02,18), S); rim.rotation.z=Math.PI/2; rim.position.x=side*.132; w.add(rim);
+        for(let i=0;i<6;i++){ const sp=mesh(new T.BoxGeometry(.02,.05,R*1.1), D); const a=i*Math.PI/3+Math.PI/6; sp.position.x=side*.14; sp.rotation.x=a; w.add(sp); }
+        const cap=mesh(new T.CylinderGeometry(.05,.05,.03,10), S); cap.rotation.z=Math.PI/2; cap.position.x=side*.15; w.add(cap);
         wheels.push(w); }
-      // spare on the tailgate
-      const spare=mesh(new T.CylinderGeometry(.32,.32,.22,16), M.tire); spare.rotation.x=Math.PI/2; spare.position.set(0,.98,-1.38); car.add(spare);
-      // driver
-      const H=human({legs:false}); car.add(H.root); H.pelvis.position.set(.3,.95,-.12); H.torso.rotation.x=-.05;
-      H.lArm.rotation.x = H.rArm.rotation.x = -.9; H.lFore.rotation.x = H.rFore.rotation.x = -.55;
-      const sw=mesh(new T.TorusGeometry(.17,.022,6,18), M.dark); sw.position.set(.3,1.22,.38); sw.rotation.x=-.5; car.add(sw);
+      // driver, seen through the glass
+      const H=human({legs:false}); H.root.scale.setScalar(.8); car.add(H.root); H.pelvis.position.set(.29,.74,-.12);
+      H.lArm.rotation.x = H.rArm.rotation.x = -.95; H.lFore.rotation.x = H.rFore.rotation.x = -.5;
       let p=0;
       tick=(dt,m)=>{ const v=Math.min(2,m); p += dt*v;
         for(const w of wheels) w.rotation.x += dt*v*6;
-        car.position.y = .025*Math.sin(p*9)*Math.min(1,v); car.rotation.z = .03*Math.sin(p*5.3)*Math.min(1,v); car.rotation.x = .02*Math.sin(p*7.1)*Math.min(1,v); // rough road
+        car.position.y = .02*Math.sin(p*9)*Math.min(1,v); car.rotation.z = .025*Math.sin(p*5.3)*Math.min(1,v); car.rotation.x = .015*Math.sin(p*7.1)*Math.min(1,v); // rough road
         H.torso.rotation.z = -car.rotation.z*1.5; };
     }
     else if(type==="paddler"){
