@@ -23,15 +23,19 @@
     return loading;
   }
 
-  // ---- the generated 4Runner (scripts/4runner/build.py -> assets/4runner): one packed binary + three textures, loaded once
-  const RUNNER_DIR = "assets/4runner/", RUNNER_VER = "3";
-  let runnerP = null;
-  function loadRunner(){
-    if(runnerP) return runnerP;
-    const T = window.THREE, tl = new T.TextureLoader();
-    const tex = f => new Promise((res, rej) => tl.load(RUNNER_DIR + f + "?v=" + RUNNER_VER, t => { t.anisotropy = 8; res(t); }, undefined, rej));
-    runnerP = Promise.all([
-      fetch(RUNNER_DIR + "model.bin?v=" + RUNNER_VER).then(r => { if(!r.ok) throw new Error("model.bin " + r.status); return r.arrayBuffer(); }),
+  // ---- generated vehicles (scripts/<name>/build.py -> assets/<name>): one packed binary + three textures each, loaded once.
+  // dims: front/rear axle z, wheel-centre |x| and tyre radius in metres; rim: wheel colour.
+  const VEHICLES = {
+    "4runner": { ver:"3", fa:1.5165, ra:-1.2775, wx:.80,  r:.4015, rim:0xc9ced4, rimShine:110 },   // 2012 4Runner SR5, BFG KO3 265/70R17
+    "lx470":   { ver:"1", fa:1.6103, ra:-1.2347, wx:.813, r:.3957, rim:0x7d5f3a, rimShine:22 },    // 1998 LX 470, BFG KO2 275/70R16, bronze wheels
+  };
+  const vehicleP = {};
+  function loadVehicle(name){
+    if(vehicleP[name]) return vehicleP[name];
+    const V = VEHICLES[name], dir = "assets/" + name + "/", T = window.THREE, tl = new T.TextureLoader();
+    const tex = f => new Promise((res, rej) => tl.load(dir + f + "?v=" + V.ver, t => { t.anisotropy = 8; res(t); }, undefined, rej));
+    const p = Promise.all([
+      fetch(dir + "model.bin?v=" + V.ver).then(r => { if(!r.ok) throw new Error(name + " model.bin " + r.status); return r.arrayBuffer(); }),
       tex("body.jpg"), tex("body_spec.jpg"), tex("wheel.jpg")
     ]).then(([buf, atlas, spec, wheelTex]) => {
       const Ph = o => new T.MeshPhongMaterial(o);
@@ -39,14 +43,15 @@
       const mats = {
         body:  [Ph({ map:atlas, specularMap:spec, specular:0x9aa1a9, shininess:55 }), dark, silver],
         wheel: [Ph({ map:wheelTex, specular:0x161616, shininess:5, side:T.DoubleSide }),
-                Ph({ color:0xc9ced4, specular:0xffffff, shininess:110, side:T.DoubleSide }), Ph({ color:0x1b1c1f, side:T.DoubleSide })],
+                Ph({ color:V.rim, specular:V.rimShine > 60 ? 0xffffff : 0x6b5a44, shininess:V.rimShine, side:T.DoubleSide }), Ph({ color:0x1b1c1f, side:T.DoubleSide })],
       };
-      return { geo: parseRunner(T, buf), mats };
+      return { geo: parseVehicle(T, buf), mats, V };
     });
-    runnerP.catch(() => { runnerP = null; });
-    return runnerP;
+    vehicleP[name] = p;
+    p.catch(() => { delete vehicleP[name]; });
+    return p;
   }
-  function parseRunner(T, buf){
+  function parseVehicle(T, buf){
     const dv = new DataView(buf), n = dv.getUint32(4, true);
     const head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 8, n))), base = 8 + n, out = {};
     for(const m of head.meshes){
@@ -61,12 +66,11 @@
     }
     return out;
   }
-  function assembleRunner(R, body, car, wheels){
-    const T = window.THREE, mk = k => { const o = new T.Mesh(R.geo[k], R.mats[k]); o.frustumCulled = false; return o; };
+  function assembleVehicle(R, body, car, wheels){
+    const T = window.THREE, V = R.V, mk = k => { const o = new T.Mesh(R.geo[k], R.mats[k]); o.frustumCulled = false; return o; };
     body.add(mk("body"));
-    const WX = .80, AXLE_R = .4015, FA = 1.5165, RA = -1.2775;      // 63 in track, 265/70R17, 110 in wheelbase
-    for(const x of [1, -1]) for(const z of [FA, RA]){
-      const w = new T.Group(); w.position.set(x * WX, AXLE_R, z); if(x < 0) w.rotation.y = Math.PI;   // lettering faces out
+    for(const x of [1, -1]) for(const z of [V.fa, V.ra]){
+      const w = new T.Group(); w.position.set(x * V.wx, V.r, z); if(x < 0) w.rotation.y = Math.PI;   // lettering faces out
       w.add(mk("wheel")); car.add(w); wheels.push(w);
     }
   }
@@ -199,13 +203,13 @@
           H[k+"Foot"].rotation.x = -(H[k+"Thigh"].rotation.x+H[k+"Shin"].rotation.x); }
       };
     }
-    else if(type==="4runner"){ // 2012 Toyota 4Runner SR5 Premium, Magnetic Gray, on BFGoodrich KO3s.
-      // The model is generated offline (scripts/4runner/build.py) from a side-on reference photo and the published dimensions,
-      // and loaded from assets/4runner. Car faces +Z; +X is the driver's (left) side. Built at true size, then shrunk.
+    else if(VEHICLES[type]){ // generated vehicles: "4runner" (2012 SR5, Magnetic Gray, KO3s) and "lx470" (1998, Green Mica Pearl, KO2s, bronze wheels).
+      // Each is generated offline (scripts/<name>/build.py) from a side-on reference photo and the published dimensions,
+      // and loaded from assets/<name>. Car faces +Z; +X is the driver's (left) side. Built at true size, then shrunk.
       const car=new T.Group(); car.scale.setScalar(.37); root.add(car);
       const body=new T.Group(); car.add(body); const wheels=[];
-      loadRunner().then(R=>assembleRunner(R, body, car, wheels)).catch(err=>{
-        console.warn("4Runner model unavailable, using the simple one", err); legacyRunner(body, wheels); });
+      loadVehicle(type).then(R=>assembleVehicle(R, body, car, wheels)).catch(err=>{
+        console.warn(type + " model unavailable, using the simple one", err); legacyRunner(body, wheels); });
       function legacyRunner(car, wheels){
       const P=new T.MeshPhongMaterial({ color:0x5a5e64, shininess:60, specular:0x80868d });   // Magnetic Gray metallic
       const S=new T.MeshPhongMaterial({ color:0xd4d8dd, shininess:110, specular:0xffffff });  // silver / chrome
@@ -303,8 +307,9 @@
     return { root, tick: tick || (()=>{}) };
   }
 
-  function create(map, kind){
-    const T = window.THREE, type = KINDS[kind];
+  // opts.vehicle picks a generated vehicle ("4runner", "lx470") for vehicle activities; default is the 4Runner
+  function create(map, kind, opts){
+    const T = window.THREE, v = opts && opts.vehicle, type = KINDS[kind] === "4runner" && VEHICLES[v] ? v : KINDS[kind];
     const camera=new T.Camera(), scene=new T.Scene();
     scene.add(new T.HemisphereLight(0xffffff, 0x445066, 1.0));
     const sun=new T.DirectionalLight(0xffffff, .8); sun.position.set(.5,1,.7); scene.add(sun);
@@ -342,5 +347,5 @@
     };
   }
 
-  window.Rider3D = { supports: k => !!KINDS[k], load, create };
+  window.Rider3D = { supports: k => !!KINDS[k], load, create, vehicles: Object.keys(VEHICLES) };
 })();
