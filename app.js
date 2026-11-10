@@ -4,7 +4,7 @@ const CFG = window.LOG_CONFIG || {};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const KINDS = {temple:"Temple & sacred site",backpacking:"Backpacking",highline:"Highline & rope swing",hike:"Hike",trailrun:"Trail run",bike:"Bike ride",mtb:"Mountain bike",ski:"Backcountry ski",climb:"Climbing & canyoneering",water:"Water & river",city:"City & culture",show:"Show & performance",road:"Road trip",other:"Other"};
+const KINDS = {temple:"Temple & sacred site",backpacking:"Backpacking",highline:"Highline & rope swing",hike:"Hike",trailrun:"Trail run",bike:"Bike ride",mtb:"Mountain bike",ski:"Backcountry ski",climb:"Climbing & canyoneering",water:"Water & river",city:"City & culture",show:"Show & performance",offroad:"4x4",road:"Road trip",other:"Other"};
 // Little figures that ride along the route during replay, one per activity kind (stroke drawings on a 24×24 grid).
 const _hiker='<circle cx="12.5" cy="4" r="2" class="f"/><path d="M12 7l-1 6M11 13l2 4v4M11 13l-2 4-1 4M12 8l3 3M16 10l2 11"/>';
 const _cyclist='<circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3.5"/><path d="M6 17l4-5h5l3 5M10 12l2 5"/><circle cx="14.5" cy="4.5" r="2" class="f"/><path d="M10 11l3-4 3 3.5M10 11l2 4"/>';
@@ -16,6 +16,7 @@ const REPLAY_FIGS = {
   ski:'<circle cx="14" cy="4" r="2" class="f"/><path d="M13 7l-3 5M10 12l2 3-1 3M10 12l-2 3-1 3M3 18.5l13 2.5M12 8l3 3 1 5"/>',
   climb:_hiker,
   water:'<path d="M3 16c3 2 15 2 18 0" /><circle cx="12" cy="7" r="2" class="f"/><path d="M12 10v4M6 8l12 10"/>',
+  offroad:'<path d="M2 15v-4h4l2-4h7l2 4h4v4zM8 7v4M15 7v4"/><circle cx="6.5" cy="16.5" r="2.5" class="f"/><circle cx="17.5" cy="16.5" r="2.5" class="f"/>',
 };
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const STYLES = { satellite:"mapbox://styles/mapbox/satellite-streets-v12", terrain:"mapbox://styles/mapbox/outdoors-v12" };

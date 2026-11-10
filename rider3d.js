@@ -4,7 +4,7 @@
 // Model units are meters, origin at the feet, facing +Z, up +Y.
 (function(){
   const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js";
-  const KINDS = { hike:"hiker", climb:"hiker", backpacking:"backpacker", trailrun:"runner", bike:"cyclist", mtb:"cyclist", ski:"skier", water:"paddler" };
+  const KINDS = { hike:"hiker", climb:"hiker", backpacking:"backpacker", trailrun:"runner", bike:"cyclist", mtb:"cyclist", ski:"skier", water:"paddler", offroad:"jeep" };
   const ACCENT = 0x2f9bff, SCREEN_PX = 46; // figure height on screen, in pixels
   // Outfits for the figure. Pick one with replayOutfit in config.js.
   const OUTFITS = {
@@ -150,6 +150,45 @@
         for(const k of ["l","r"]){ reach(H[k+"Thigh"], H[k+"Shin"], feet[k][0]-hy, feet[k][1]-hz);
           H[k+"Foot"].rotation.x = -(H[k+"Thigh"].rotation.x+H[k+"Shin"].rotation.x); }
       };
+    }
+    else if(type==="jeep"){ // open-top 4x4 on chunky tires, the figure at the wheel (driver's seat on the left, +X)
+      const car=new T.Group(); root.add(car);
+      const paint=M.accent, R=.36, TW=.27;
+      const box=(w,h,l,m,x,y,z)=>{ const b=mesh(new T.BoxGeometry(w,h,l),m); b.position.set(x,y,z); car.add(b); return b; };
+      box(1.3,.42,2.5,paint, 0,.66,0);              // tub
+      box(1.24,.16,.95,paint, 0,.95,.72);            // hood
+      box(1.36,.14,.12,M.dark, 0,.5,1.3);            // front bumper
+      box(1.36,.14,.12,M.dark, 0,.5,-1.3);           // rear bumper
+      box(.9,.26,.03,M.dark, 0,.8,1.265);            // grille
+      for(const x of [.42,-.42]){ const lamp=mesh(new T.CylinderGeometry(.075,.075,.04,12), M.helmet); lamp.rotation.x=Math.PI/2; lamp.position.set(x,.83,1.27); car.add(lamp); }
+      for(const x of [.66,-.66]) for(const z of [.85,-.85]){ const f=mesh(new T.BoxGeometry(.14,.06,.82), M.dark); f.position.set(x*1.04,.92,z); car.add(f); } // fender flares
+      // windshield frame and roll bar
+      const ws=[[.6,.88,.24],[.6,1.38,.12],[-.6,1.38,.12],[-.6,.88,.24]];
+      car.add(tube(ws[0],ws[1],.025,M.dark), tube(ws[1],ws[2],.025,M.dark), tube(ws[2],ws[3],.025,M.dark));
+      const glass=mesh(new T.PlaneGeometry(1.15,.48), new T.MeshPhongMaterial({ color:0x9fc7e6, transparent:true, opacity:.35, side:T.DoubleSide })); glass.position.set(0,1.13,.18); glass.rotation.x=-.24; car.add(glass);
+      for(const x of [.6,-.6]) car.add(tube([x,.88,-.55],[x,1.42,-.5],.03,M.dark), tube([x,1.42,-.5],[x,1.38,.12],.022,M.dark));
+      car.add(tube([.6,1.42,-.5],[-.6,1.42,-.5],.03,M.dark));
+      for(let i=-1;i<=1;i++){ const l=mesh(new T.BoxGeometry(.12,.06,.05), M.helmet); l.position.set(i*.2,1.45,.12); car.add(l); } // roof light bar
+      // seats
+      for(const x of [.3,-.3]){ box(.42,.1,.42,M.dark, x,.88,-.1); box(.42,.48,.08,M.dark, x,1.1,-.33); }
+      // wheels
+      const wheels=[];
+      for(const x of [.66,-.66]) for(const z of [.85,-.85]){ const w=new T.Group(); w.position.set(x,R,z); car.add(w);
+        const t=mesh(new T.CylinderGeometry(R,R,TW,18), M.tire); t.rotation.z=Math.PI/2; w.add(t);
+        const hub=mesh(new T.CylinderGeometry(R*.5,R*.5,TW+.01,10), M.metal); hub.rotation.z=Math.PI/2; w.add(hub);
+        for(let i=0;i<6;i++){ const lug=mesh(new T.BoxGeometry(TW+.02,.06,.09), M.tire); const a=i*Math.PI/3; lug.position.set(0,Math.cos(a)*R,Math.sin(a)*R); lug.rotation.x=-a; w.add(lug); } // tread blocks
+        wheels.push(w); }
+      // spare on the tailgate
+      const spare=mesh(new T.CylinderGeometry(.32,.32,.22,16), M.tire); spare.rotation.x=Math.PI/2; spare.position.set(0,.98,-1.38); car.add(spare);
+      // driver
+      const H=human({legs:false}); car.add(H.root); H.pelvis.position.set(.3,.95,-.12); H.torso.rotation.x=-.05;
+      H.lArm.rotation.x = H.rArm.rotation.x = -.9; H.lFore.rotation.x = H.rFore.rotation.x = -.55;
+      const sw=mesh(new T.TorusGeometry(.17,.022,6,18), M.dark); sw.position.set(.3,1.22,.38); sw.rotation.x=-.5; car.add(sw);
+      let p=0;
+      tick=(dt,m)=>{ const v=Math.min(2,m); p += dt*v;
+        for(const w of wheels) w.rotation.x += dt*v*6;
+        car.position.y = .025*Math.sin(p*9)*Math.min(1,v); car.rotation.z = .03*Math.sin(p*5.3)*Math.min(1,v); car.rotation.x = .02*Math.sin(p*7.1)*Math.min(1,v); // rough road
+        H.torso.rotation.z = -car.rotation.z*1.5; };
     }
     else if(type==="paddler"){
       const kayak=mesh(new T.SphereGeometry(1,20,12), M.accent); kayak.scale.set(.32,.16,2.2); kayak.position.y=.12; root.add(kayak);
