@@ -23,6 +23,54 @@
     return loading;
   }
 
+  // ---- the generated 4Runner (scripts/4runner/build.py -> assets/4runner): one packed binary + three textures, loaded once
+  const RUNNER_DIR = "assets/4runner/", RUNNER_VER = "2";
+  let runnerP = null;
+  function loadRunner(){
+    if(runnerP) return runnerP;
+    const T = window.THREE, tl = new T.TextureLoader();
+    const tex = f => new Promise((res, rej) => tl.load(RUNNER_DIR + f + "?v=" + RUNNER_VER, t => { t.anisotropy = 8; res(t); }, undefined, rej));
+    runnerP = Promise.all([
+      fetch(RUNNER_DIR + "model.bin?v=" + RUNNER_VER).then(r => { if(!r.ok) throw new Error("model.bin " + r.status); return r.arrayBuffer(); }),
+      tex("body.jpg"), tex("body_spec.jpg"), tex("wheel.jpg")
+    ]).then(([buf, atlas, spec, wheelTex]) => {
+      const Ph = o => new T.MeshPhongMaterial(o);
+      const silver = Ph({ color:0x8e949a, specular:0x9aa0a6, shininess:60 }), dark = Ph({ color:0x17181b, specular:0x1a1a1a, shininess:6 });
+      const mats = {
+        body:  [Ph({ map:atlas, specularMap:spec, specular:0x9aa1a9, shininess:55 }), dark, silver],
+        wheel: [Ph({ map:wheelTex, specular:0x161616, shininess:5, side:T.DoubleSide }),
+                Ph({ color:0xc9ced4, specular:0xffffff, shininess:110, side:T.DoubleSide }), Ph({ color:0x1b1c1f, side:T.DoubleSide })],
+      };
+      return { geo: parseRunner(T, buf), mats };
+    });
+    runnerP.catch(() => { runnerP = null; });
+    return runnerP;
+  }
+  function parseRunner(T, buf){
+    const dv = new DataView(buf), n = dv.getUint32(4, true);
+    const head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 8, n))), base = 8 + n, out = {};
+    for(const m of head.meshes){
+      const g = new T.BufferGeometry(), q = new Int16Array(buf, base + m.pos, m.count * 3), p = new Float32Array(m.count * 3), k = m.scale / 32767;
+      for(let i = 0; i < p.length; i++) p[i] = q[i] * k;
+      g.setAttribute("position", new T.BufferAttribute(p, 3));
+      g.setAttribute("normal", new T.BufferAttribute(new Int8Array(buf, base + m.nrm, m.count * 3), 3, true));
+      if(m.uv != null) g.setAttribute("uv", new T.BufferAttribute(new Uint16Array(buf, base + m.uv, m.count * 2), 2, true));
+      g.setIndex(new T.BufferAttribute(m.indexType === 32 ? new Uint32Array(buf, base + m.index, m.indexCount) : new Uint16Array(buf, base + m.index, m.indexCount), 1));
+      for(const [start, count, mat] of m.groups) g.addGroup(start, count, mat);
+      out[m.name] = g;
+    }
+    return out;
+  }
+  function assembleRunner(R, body, car, wheels){
+    const T = window.THREE, mk = k => { const o = new T.Mesh(R.geo[k], R.mats[k]); o.frustumCulled = false; return o; };
+    body.add(mk("body"));
+    const WX = .80, AXLE_R = .4015, FA = 1.5165, RA = -1.2775;      // 63 in track, 265/70R17, 110 in wheelbase
+    for(const x of [1, -1]) for(const z of [FA, RA]){
+      const w = new T.Group(); w.position.set(x * WX, AXLE_R, z); if(x < 0) w.rotation.y = Math.PI;   // lettering faces out
+      w.add(mk("wheel")); car.add(w); wheels.push(w);
+    }
+  }
+
   function build(type){
     const T = window.THREE;
     const mat = c => new T.MeshLambertMaterial({ color:c });
@@ -151,10 +199,14 @@
           H[k+"Foot"].rotation.x = -(H[k+"Thigh"].rotation.x+H[k+"Shin"].rotation.x); }
       };
     }
-    else if(type==="4runner"){ // 2012 Toyota 4Runner (5th gen), Magnetic Gray with silver trim. Built at true size in meters
-      // from its side silhouette (tall beltline, kicked-up rear quarter window, thick D-pillar, square flared arches), then shrunk.
-      // Car faces +Z; +X is the driver's (left) side.
+    else if(type==="4runner"){ // 2012 Toyota 4Runner SR5 Premium, Magnetic Gray, on BFGoodrich KO3s.
+      // The model is generated offline (scripts/4runner/build.py) from a side-on reference photo and the published dimensions,
+      // and loaded from assets/4runner. Car faces +Z; +X is the driver's (left) side. Built at true size, then shrunk.
       const car=new T.Group(); car.scale.setScalar(.37); root.add(car);
+      const body=new T.Group(); car.add(body); const wheels=[];
+      loadRunner().then(R=>assembleRunner(R, body, car, wheels)).catch(err=>{
+        console.warn("4Runner model unavailable, using the simple one", err); legacyRunner(body, wheels); });
+      function legacyRunner(car, wheels){
       const P=new T.MeshPhongMaterial({ color:0x5a5e64, shininess:60, specular:0x80868d });   // Magnetic Gray metallic
       const S=new T.MeshPhongMaterial({ color:0xd4d8dd, shininess:110, specular:0xffffff });  // silver / chrome
       const G=new T.MeshPhongMaterial({ color:0x14191e, shininess:100, specular:0x8f9aa4, side:T.DoubleSide, transparent:true, opacity:.8 }); // tinted glass
@@ -220,7 +272,7 @@
         const emR=new T.Group(); emR.position.set(0,1.3,-2.38); emR.rotation.set(.175,Math.PI,0); add(emR);
         for(const [rx,ry,t,y] of [[.08,.054,.12,0],[.029,.045,.18,0],[.056,.024,.2,.024]]){ const o=mesh(new T.TorusGeometry(1,t,6,24), S); o.scale.set(rx,ry,.03); o.position.y=y; emR.add(o); } }
       // wheels: street tires with silver six split-spoke alloys
-      const wheels=[], RIM=mat(0x34373b);
+      const RIM=mat(0x34373b);
       for(const x of [.8,-.8]) for(const z of [FA,RA]){ const w=new T.Group(); w.position.set(x,R,z); add(w);
         const t=mesh(new T.CylinderGeometry(R,R,.27,24), M.tire); t.rotation.z=Math.PI/2; w.add(t);
         const sd=Math.sign(x), face=mesh(new T.CylinderGeometry(R*.68,R*.68,.02,24), RIM); face.rotation.z=Math.PI/2; face.position.x=sd*.136; w.add(face);
@@ -229,15 +281,12 @@
           const sp=mesh(new T.BoxGeometry(.02,.04,R*.58), S); sp.position.z=R*.36; piv.add(sp); }
         const cap=mesh(new T.CylinderGeometry(.06,.06,.03,12), S); cap.rotation.z=Math.PI/2; cap.position.x=sd*.155; w.add(cap);
         wheels.push(w); }
-      { const body=new T.Group(); body.position.y=.03; for(const o of car.children.slice()) if(!wheels.includes(o)) body.add(o); car.add(body); }
-      // driver, seen through the glass
-      const H=human({legs:false}); car.add(H.root); H.pelvis.position.set(.4,1.01,-.1);
-      H.lArm.rotation.x = H.rArm.rotation.x = -.95; H.lFore.rotation.x = H.rFore.rotation.x = -.5;
+      
+      }
       let p=0;
       tick=(dt,m)=>{ const v=Math.min(2,m); p += dt*v;
         for(const w of wheels) w.rotation.x += dt*v*6;
-        car.position.y = .02*Math.sin(p*9)*Math.min(1,v); car.rotation.z = .025*Math.sin(p*5.3)*Math.min(1,v); car.rotation.x = .015*Math.sin(p*7.1)*Math.min(1,v); // rough road
-        H.torso.rotation.z = -car.rotation.z*1.5; };
+        body.position.y = .02*Math.sin(p*9)*Math.min(1,v); body.rotation.z = .02*Math.sin(p*5.3)*Math.min(1,v); body.rotation.x = .012*Math.sin(p*7.1)*Math.min(1,v); }; // rough road
     }
     else if(type==="paddler"){
       const kayak=mesh(new T.SphereGeometry(1,20,12), M.accent); kayak.scale.set(.32,.16,2.2); kayak.position.y=.12; root.add(kayak);
